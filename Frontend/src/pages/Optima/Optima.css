@@ -1,0 +1,1045 @@
+/* =========================================================
+   OPTIMA — INTELLIGENT OPTIMIZATION ENGINE
+   ========================================================= */
+
+.optima-page {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding-bottom: 50px;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.optima-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 220px;
+  margin-bottom: 22px;
+  padding: 38px 42px;
+  overflow: hidden;
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(124, 58, 237, 0.35),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 15% 90%,
+      rgba(220, 38, 38, 0.24),
+      transparent 35%
+    ),
+    linear-gradient(135deg, #17151f 0%, #211b2c 48%, #301f39 100%);
+  box-shadow:
+    0 18px 45px rgba(23, 21, 31, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.optima-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #dc2626, #ef4444, #7c3aed);
+}
+
+.optima-hero::after {
+  content: "OPTIMA";
+  position: absolute;
+  right: 35px;
+  bottom: -35px;
+  color: rgba(255, 255, 255, 0.035);
+  font-size: 125px;
+  font-weight: 900;
+  letter-spacing: -7px;
+}
+
+.optima-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+}
+
+.optima-engine-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: #c4b5fd;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.6px;
+}
+
+.optima-engine-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.12);
+}
+
+.optima-hero h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 37px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -1.3px;
+}
+
+.optima-hero h2 span {
+  color: #a78bfa;
+}
+
+.optima-hero p {
+  max-width: 650px;
+  margin: 13px 0 0;
+  color: #b9b4c4;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.optima-hero-symbol {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 105px;
+  height: 105px;
+  margin-right: 30px;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.1);
+  box-shadow:
+    0 0 0 14px rgba(124, 58, 237, 0.035),
+    0 0 45px rgba(124, 58, 237, 0.12);
+}
+
+.optima-hero-symbol::before {
+  content: "";
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border: 1px dashed rgba(167, 139, 250, 0.35);
+  border-radius: 50%;
+}
+
+.optima-hero-symbol span {
+  color: #c4b5fd;
+  font-size: 40px;
+}
+
+/* =========================================================
+   CONTROL
+   ========================================================= */
+
+.optima-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 20px;
+  padding: 20px 22px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.045);
+}
+
+.optima-control-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.optima-control-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 39px;
+  height: 39px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.optima-control-title span {
+  display: block;
+  margin-bottom: 3px;
+  color: #8b5cf6;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 1.1px;
+}
+
+.optima-control-title h3 {
+  margin: 0;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.optima-select-wrapper {
+  position: relative;
+  width: min(560px, 55%);
+}
+
+.optima-select-wrapper select {
+  width: 100%;
+  height: 45px;
+  padding: 0 42px 0 14px;
+  appearance: none;
+  border: 1px solid #d9dde5;
+  border-radius: 9px;
+  outline: none;
+  background: #ffffff;
+  color: #25252a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.optima-select-wrapper select:hover {
+  border-color: #b9a5e8;
+}
+
+.optima-select-wrapper select:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.optima-select-arrow {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  pointer-events: none;
+  transform: translateY(-55%);
+  color: #7c3aed;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.optima-label {
+  display: block;
+  color: #8a8f9b;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 1.15px;
+}
+
+/* =========================================================
+   TASK SUMMARY
+   ========================================================= */
+
+.optima-task-summary {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 2fr;
+  margin-bottom: 25px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.optima-task-main {
+  padding: 22px 24px;
+  border-right: 1px solid #eceef2;
+  background: linear-gradient(135deg, #ffffff, #fafafa);
+}
+
+.optima-task-main h3 {
+  margin: 7px 0 5px;
+  color: #171717;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.optima-task-main p {
+  margin: 0;
+  color: #7c8491;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.optima-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.optima-summary-metrics > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 17px 20px;
+  border-right: 1px solid #eceef2;
+}
+
+.optima-summary-metrics > div:last-child {
+  border-right: none;
+}
+
+.optima-summary-metrics span {
+  margin-bottom: 6px;
+  color: #969ba5;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.6px;
+}
+
+.optima-summary-metrics strong {
+  color: #24242a;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+.optima-summary-metrics .metric-success {
+  color: #16a34a;
+}
+
+.optima-summary-metrics .metric-optima {
+  color: #7c3aed;
+}
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.optima-loading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 100px;
+  margin-bottom: 25px;
+  padding: 20px 24px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.optima-loading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: #f3efff;
+  color: #7c3aed;
+  font-size: 22px;
+  animation: optima-pulse 1.4s ease-in-out infinite;
+}
+
+.optima-loading strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #25252a;
+  font-size: 13px;
+}
+
+.optima-loading p {
+  margin: 0;
+  color: #858b97;
+  font-size: 10px;
+}
+
+.optima-loading-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  overflow: hidden;
+  background: #f0eef5;
+}
+
+.optima-loading-bar span {
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed);
+  animation: optima-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes optima-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(310%);
+  }
+}
+
+@keyframes optima-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* =========================================================
+   RESULTS HEADER
+   ========================================================= */
+
+.optima-results {
+  width: 100%;
+}
+
+.optima-results-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+
+.optima-results-heading h3 {
+  margin: 5px 0 0;
+  color: #171717;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.optima-results-count {
+  padding: 7px 11px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #737985;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.optima-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.optima-card {
+  position: relative;
+  overflow: hidden;
+  padding: 21px;
+  border: 1px solid #e5e7eb;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.045);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.optima-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 32px rgba(15, 23, 42, 0.09);
+}
+
+.optima-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.optima-card-elegible::before {
+  background: #16a34a;
+}
+
+.optima-card-no-elegible::before {
+  background: #d1d5db;
+}
+
+.optima-card-recommended {
+  border-color: #c4b5fd;
+  box-shadow:
+    0 10px 30px rgba(124, 58, 237, 0.09),
+    0 0 0 1px rgba(124, 58, 237, 0.03);
+}
+
+.optima-card-recommended::before {
+  background: linear-gradient(180deg, #7c3aed, #a855f7);
+}
+
+.optima-card-alternative {
+  border-color: #f0d39c;
+}
+
+.optima-card-alternative::before {
+  background: #d97706;
+}
+
+/* =========================================================
+   CARD TOP
+   ========================================================= */
+
+.optima-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 13px;
+}
+
+.optima-person {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 11px;
+}
+
+.optima-person-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.optima-card-recommended .optima-person-avatar {
+  background: #f3efff;
+  color: #7c3aed;
+}
+
+.optima-person-label {
+  display: block;
+  margin-bottom: 3px;
+  color: #9a9ea7;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.optima-person h4 {
+  margin: 0;
+  overflow: hidden;
+  color: #202126;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optima-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #fafafa;
+  color: #747a85;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.optima-rank span {
+  color: #a1a5ad;
+  font-size: 9px;
+}
+
+.optima-rank-first {
+  border-color: #ddd0ff;
+  background: #f5f0ff;
+  color: #7c3aed;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.optima-status-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 27px;
+  margin-bottom: 14px;
+}
+
+.optima-badge,
+.optima-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.45px;
+}
+
+.optima-badge {
+  padding: 6px 9px;
+}
+
+.optima-badge-recommended {
+  background: #f3efff;
+  color: #6d28d9;
+}
+
+.optima-badge-alternative {
+  background: #fff7e8;
+  color: #a15c05;
+}
+
+.optima-status {
+  padding: 6px 9px;
+}
+
+.optima-status-success {
+  background: #ecfdf3;
+  color: #168348;
+}
+
+.optima-status-danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.optima-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* =========================================================
+   SCORE
+   ========================================================= */
+
+.optima-score-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 17px;
+  padding: 15px 16px;
+  border: 1px solid #eeeaf7;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #faf9ff, #f5f1ff);
+}
+
+.optima-score-box span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6f667e;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+}
+
+.optima-score-box small {
+  color: #9a93a4;
+  font-size: 8px;
+}
+
+.optima-score-box strong {
+  color: #6d28d9;
+  font-size: 29px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.optima-metrics {
+  display: grid;
+  gap: 11px;
+  margin-bottom: 17px;
+}
+
+.optima-metric {
+  display: grid;
+  gap: 5px;
+}
+
+.optima-metric-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.optima-metric-head span {
+  color: #737985;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.optima-metric-head strong {
+  color: #31333a;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.optima-progress {
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eceef2;
+}
+
+.optima-progress span {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  transition: width 0.45s ease;
+}
+
+/* =========================================================
+   CAPACITY
+   ========================================================= */
+
+.optima-capacity {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 18px;
+  border-top: 1px solid #eef0f3;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.optima-capacity > div {
+  padding: 11px 10px;
+  border-right: 1px solid #eef0f3;
+}
+
+.optima-capacity > div:last-child {
+  border-right: none;
+}
+
+.optima-capacity span {
+  display: block;
+  margin-bottom: 4px;
+  color: #9a9ea7;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.optima-capacity strong {
+  color: #3a3c43;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   SKILLS
+   ========================================================= */
+
+.optima-skills {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.optima-section-title {
+  margin-bottom: 2px;
+  color: #626773;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.skill-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 8px;
+}
+
+.skill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.skill-row span:not(.skill-icon) {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.55px;
+}
+
+.skill-row p {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.skill-ok {
+  border: 1px solid #d7f1e1;
+  background: #f0fdf4;
+  color: #19734a;
+}
+
+.skill-ok .skill-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.skill-missing {
+  border: 1px solid #f5d9df;
+  background: #fff5f6;
+  color: #b42346;
+}
+
+.skill-missing .skill-icon {
+  background: #ffe4e8;
+  color: #be123c;
+}
+
+.skill-insufficient {
+  border: 1px solid #f5e2c5;
+  background: #fff9ef;
+  color: #9a5a09;
+}
+
+.skill-insufficient .skill-icon {
+  background: #ffedcc;
+  color: #a15c05;
+}
+
+/* =========================================================
+   EXPLANATION
+   ========================================================= */
+
+.optima-explanation {
+  padding-top: 14px;
+  border-top: 1px solid #eef0f3;
+}
+
+.optima-explanation-title {
+  margin-bottom: 5px;
+}
+
+.optima-explanation-title span {
+  color: #8d929d;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.9px;
+}
+
+.optima-explanation p {
+  margin: 0;
+  color: #646a75;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.optima-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 230px;
+  padding: 35px;
+  text-align: center;
+  border: 1px dashed #d9dce3;
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.optima-empty-icon,
+.optima-empty-orbit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 55px;
+  height: 55px;
+  margin-bottom: 13px;
+  border-radius: 16px;
+  background: #f3efff;
+  color: #7c3aed;
+  font-size: 24px;
+}
+
+.optima-empty h3 {
+  margin: 0 0 5px;
+  color: #24252a;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.optima-empty p {
+  max-width: 450px;
+  margin: 0;
+  color: #858b96;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.optima-empty-start {
+  min-height: 260px;
+}
+
+.optima-empty-orbit {
+  position: relative;
+  border-radius: 50%;
+  background: #f5f0ff;
+  box-shadow:
+    0 0 0 10px rgba(124, 58, 237, 0.035),
+    0 0 0 20px rgba(124, 58, 237, 0.018);
+}
+
+.optima-empty-orbit span {
+  animation: optima-pulse 1.7s ease-in-out infinite;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .optima-hero {
+    padding: 34px;
+  }
+
+  .optima-hero-symbol {
+    margin-right: 10px;
+  }
+
+  .optima-task-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .optima-task-main {
+    border-right: none;
+    border-bottom: 1px solid #eceef2;
+  }
+}
+
+@media (max-width: 900px) {
+  .optima-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .optima-control {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .optima-select-wrapper {
+    width: 100%;
+  }
+
+  .optima-summary-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .optima-summary-metrics > div:nth-child(2) {
+    border-right: none;
+  }
+
+  .optima-summary-metrics > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #eceef2;
+  }
+}
+
+@media (max-width: 650px) {
+  .optima-hero {
+    min-height: 210px;
+    padding: 28px 23px;
+  }
+
+  .optima-hero h2 {
+    font-size: 29px;
+  }
+
+  .optima-hero p {
+    font-size: 11px;
+  }
+
+  .optima-hero-symbol {
+    display: none;
+  }
+
+  .optima-control {
+    padding: 17px;
+  }
+
+  .optima-task-main {
+    padding: 18px;
+  }
+
+  .optima-summary-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .optima-summary-metrics > div {
+    padding: 14px;
+  }
+
+  .optima-card {
+    padding: 18px;
+  }
+
+  .optima-capacity {
+    grid-template-columns: 1fr;
+  }
+
+  .optima-capacity > div {
+    border-right: none;
+    border-bottom: 1px solid #eef0f3;
+  }
+
+  .optima-capacity > div:last-child {
+    border-bottom: none;
+  }
+}

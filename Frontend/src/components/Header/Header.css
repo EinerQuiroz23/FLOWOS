@@ -1,0 +1,215 @@
+/* =========================================================
+   FLOWOS — HEADER
+   ========================================================= */
+
+.header {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 76px;
+
+  padding: 0 34px;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  border-bottom: 1px solid #e5e7eb;
+
+  backdrop-filter: blur(14px);
+}
+
+.header-page-info {
+  min-width: 0;
+}
+
+.header-breadcrumb {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #9a9ea7;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.85px;
+  text-transform: uppercase;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.header-title-row h1 {
+  margin: 0;
+
+  color: #171717;
+
+  font-size: 19px;
+  font-weight: 850;
+
+  letter-spacing: -0.3px;
+}
+
+.header-page-info p {
+  margin: 3px 0 0;
+
+  color: #858b96;
+
+  font-size: 9px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-system-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #6f7682;
+
+  font-size: 8px;
+  font-weight: 650;
+}
+
+.header-status-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.09);
+}
+
+.header-divider {
+  width: 1px;
+  height: 29px;
+
+  background: #e5e7eb;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.header-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.header-user-info strong {
+  color: #25262b;
+
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.header-user-info span {
+  color: #8a909a;
+  font-size: 7px;
+}
+
+.header-user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 35px;
+  height: 35px;
+
+  border-radius: 9px;
+
+  background: linear-gradient(145deg, #fff1f2, #ffe4e6);
+
+  color: #dc2626;
+
+  font-size: 11px;
+  font-weight: 850;
+
+  border: 1px solid #fecdd3;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  min-height: 32px;
+
+  padding: 0 10px;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e4e9;
+  border-radius: 7px;
+
+  color: #6c7380;
+
+  font-size: 8px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.logout-button:hover {
+  background: #fff5f5;
+  border-color: #fecaca;
+  color: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .header {
+    padding: 0 22px;
+  }
+
+  .header-system-status,
+  .header-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 650px) {
+  .header {
+    position: relative;
+    min-height: 65px;
+    padding: 0 18px;
+  }
+
+  .header-user-info {
+    display: none;
+  }
+
+  .logout-button span:last-child {
+    display: none;
+  }
+
+  .logout-button {
+    padding: 0 9px;
+  }
+}
