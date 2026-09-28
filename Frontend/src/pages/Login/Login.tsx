@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
+import { obtenerRutaPorRol } from "../../utils/roles";
 
 import "./Login.css";
 
@@ -24,7 +25,7 @@ function Login() {
   }
 
   if (usuario) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={obtenerRutaPorRol(usuario.id_rol)} replace />;
   }
 
   const manejarSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -34,8 +35,8 @@ function Login() {
     setProcesando(true);
 
     try {
-      await iniciarSesion(email, contrasena);
-      navigate("/dashboard", { replace: true });
+      const usuarioLogueado = await iniciarSesion(email, contrasena);
+      navigate(obtenerRutaPorRol(usuarioLogueado.id_rol), { replace: true });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -187,6 +188,11 @@ function Login() {
                 )}
               </button>
             </form>
+
+            <div className="login-register-link">
+              <span>¿No tienes cuenta?</span>
+              <Link to="/registro">Regístrate</Link>
+            </div>
 
             <div className="login-security">
               <span className="login-security-dot" />

@@ -19,7 +19,7 @@ interface AuthContextType {
   usuario: UsuarioActual | null;
   token: string | null;
   cargando: boolean;
-  iniciarSesion: (email: string, contrasena: string) => Promise<void>;
+  iniciarSesion: (email: string, contrasena: string) => Promise<UsuarioActual>;
   cerrarSesion: () => void;
 }
 
@@ -70,7 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     cargarUsuario();
   }, []);
 
-  const iniciarSesion = async (email: string, contrasena: string) => {
+  const iniciarSesion = async (
+    email: string,
+    contrasena: string,
+  ): Promise<UsuarioActual> => {
     const respuesta = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: {
@@ -118,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const datosUsuario = await respuestaUsuario.json();
 
     setUsuario(datosUsuario);
+    return datosUsuario;
   };
 
   const cerrarSesion = () => {

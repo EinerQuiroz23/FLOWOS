@@ -10,6 +10,7 @@ import Tareas from "./pages/Tareas/Tareas";
 import Optima from "./pages/Optima/Optima";
 import Login from "./pages/Login/Login";
 import Usuarios from "./pages/Usuario/Usuarios";
+import RegistroEmpleado from "./pages/Registro/Registro_Empleado";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -122,6 +123,11 @@ function App() {
           ========================================= */}
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* ========================
+            Registro de empleados 
+            ======================== */}
+        <Route path="/registro" element={<RegistroEmpleado />} />
       </Route>
 
       {/* =========================================

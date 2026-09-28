@@ -654,3 +654,23 @@
     text-align: center;
   }
 }
+
+/* Registro de empleado */
+
+.login-register-link {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #8b9cb3;
+}
+
+.login-register-link a {
+  margin-left: 6px;
+  color: #5b8def;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-register-link a:hover {
+  text-decoration: underline;
+}
