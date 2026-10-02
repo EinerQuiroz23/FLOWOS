@@ -70,3 +70,25 @@ class OrganizacionRepository:
         db.flush()
 
         return organizacion
+
+    @staticmethod
+    def obtener_todas(db: Session) -> list[Organizacion]:
+        return (
+            db.query(Organizacion)
+            .order_by(Organizacion.id_organizacion.desc())
+            .all()
+        )
+
+
+    @staticmethod
+    def desactivar(db: Session, organizacion: Organizacion) -> Organizacion:
+        organizacion.estado = False
+        db.flush()
+        return organizacion
+
+
+    @staticmethod
+    def activar(db: Session, organizacion: Organizacion) -> Organizacion:
+        organizacion.estado = True
+        db.flush()
+        return organizacion

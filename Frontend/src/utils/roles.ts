@@ -9,7 +9,7 @@ export const ROLES = {
 export function obtenerRutaPorRol(idRol: number): string {
   switch (idRol) {
     case ROLES.SUPER_ADMIN:
-      return "/super-admin"; // panel de organizaciones
+      return "/organizaciones"; // panel de organizaciones
     case ROLES.ADMIN:
       return "/dashboard";
     case ROLES.SECRETARIO:

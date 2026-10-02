@@ -22,32 +22,73 @@ const SECCIONES_MENU: SeccionMenu[] = [
       {
         nombre: "Dashboard",
         ruta: "/dashboard",
-        roles: [1, 2, 3, 4],
+        roles: [1, 2, 3, 5],
         icono: "⌂",
+      },
+      {
+        nombre: "Mi panel",
+        ruta: "/mi-panel",
+        roles: [4],
+        icono: "●",
+      },
+      {
+        nombre: "Mis proyectos",
+        ruta: "/mis-proyectos",
+        roles: [4],
+        icono: "▣",
+      },
+      {
+        nombre: "Mi equipo",
+        ruta: "/mi-equipo",
+        roles: [4],
+        icono: "♧",
+      },
+      {
+        nombre: "Mis tareas",
+        ruta: "/mis-tareas",
+        roles: [4],
+        icono: "✓",
+      },
+      {
+        nombre: "Mis habilidades",
+        ruta: "/mis-habilidades",
+        roles: [4],
+        icono: "◆",
       },
       {
         nombre: "Proyectos",
         ruta: "/proyectos",
-        roles: [1, 2, 3, 4],
+        roles: [1, 2, 3],
         icono: "▣",
       },
       {
         nombre: "Personas",
         ruta: "/personas",
-        roles: [1, 2, 3, 4],
+        roles: [1, 2, 3],
         icono: "♙",
       },
       {
         nombre: "Equipos",
         ruta: "/equipos",
-        roles: [1, 2, 3, 4],
+        roles: [1, 2, 3],
         icono: "♧",
       },
       {
         nombre: "Tareas",
         ruta: "/tareas",
-        roles: [1, 2, 3, 4],
+        roles: [1, 2, 3],
         icono: "✓",
+      },
+    ],
+  },
+  {
+    titulo: "PLATFORM",
+    items: [
+      {
+        nombre: "Organizaciones",
+        ruta: "/organizaciones",
+        roles: [5],
+        icono: "◎",
       },
     ],
   },
@@ -85,6 +126,8 @@ function obtenerNombreRol(idRol: number | undefined): string {
       return "Secretario";
     case 4:
       return "Empleado";
+    case 5:
+      return "Super Admin";
     default:
       return "Usuario";
   }
@@ -155,7 +198,6 @@ function Sidebar() {
                       }
                     >
                       <span className="sidebar-link-icon">{item.icono}</span>
-
                       <span className="sidebar-link-name">{item.nombre}</span>
                     </NavLink>
                   </li>
@@ -169,7 +211,6 @@ function Sidebar() {
       <div className="sidebar-bottom">
         <div className="sidebar-engine">
           <div className="sidebar-engine-icon">✦</div>
-
           <div>
             <strong>OPTIMA ENGINE</strong>
             <span>Intelligent optimization</span>

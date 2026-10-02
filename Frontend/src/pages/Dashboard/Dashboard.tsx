@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   obtenerProyectos,
@@ -11,6 +12,7 @@ import type { Proyecto } from "../../types/proyecto";
 import type { Persona } from "../../types/persona";
 import type { Equipo } from "../../types/equipo";
 import type { Tarea } from "../../types/tarea";
+
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -18,119 +20,130 @@ function Dashboard() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [tareas, setTareas] = useState<Tarea[]>([]);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    obtenerProyectos()
-      .then((datos) => {
-        setProyectos(datos);
-      })
-      .catch((error) => {
-        console.error("Error al obtener proyectos:", error);
-      });
-
-    obtenerPersonas()
-      .then((datos) => {
-        console.log("Personas recibidas:", datos);
-        setPersonas(datos);
-      })
-      .catch((error) => {
-        console.error("Error al obtener personas:", error);
-      });
-
-    obtenerEquipos()
-      .then((datos) => {
-        console.log("Equipos recibidos:", datos);
-        setEquipos(datos);
-      })
-      .catch((error) => {
-        console.error("Error al obtener equipos:", error);
-      });
-
-    obtenerTareas()
-      .then((datos) => {
-        console.log("Tareas recibidas:", datos);
-        setTareas(datos);
-      })
-      .catch((error) => {
-        console.error("Error al obtener tareas:", error);
-      });
+    const cargar = async () => {
+      setCargando(true);
+      try {
+        const [p, pe, e, t] = await Promise.all([
+          obtenerProyectos(),
+          obtenerPersonas(),
+          obtenerEquipos(),
+          obtenerTareas(),
+        ]);
+        setProyectos(p);
+        setPersonas(pe);
+        setEquipos(e);
+        setTareas(t);
+      } catch (error) {
+        console.error("Error al cargar dashboard:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargar();
   }, []);
 
+  const proyectosActivos = proyectos.filter(
+    (p) => p.estado?.toUpperCase() === "ACTIVO",
+  ).length;
+
+  const pendientes = tareas.filter(
+    (t) => t.estado?.toUpperCase() === "PENDIENTE",
+  ).length;
+  const enProgreso = tareas.filter((t) =>
+    t.estado?.toUpperCase().includes("PROGRESO"),
+  ).length;
+  const finalizadas = tareas.filter((t) =>
+    ["FINALIZADA", "COMPLETADA"].includes(t.estado?.toUpperCase() || ""),
+  ).length;
+
+  if (cargando) {
+    return <div className="dash-msg">Cargando resumen...</div>;
+  }
+
   return (
-    <section className="dashboard">
-      <div className="dashboard-header">
-        <h2>Resumen general</h2>
-        <p>Visualiza el estado actual de tu organización.</p>
+    <section className="dash-page">
+      <div className="dash-hero">
+        <div>
+          <span className="dash-eyebrow">FLOWOS · ADMIN</span>
+          <h2>Resumen general</h2>
+          <p>Estado actual de tu organización de un vistazo.</p>
+        </div>
       </div>
 
-      <div className="dashboard-cards">
-        <div className="dashboard-card">
-          <span>Proyectos activos</span>
+      <div className="dash-cards">
+        <Link to="/proyectos" className="dash-card">
+          <span className="dash-card-label">Proyectos activos</span>
+          <strong>{proyectosActivos}</strong>
+          <p>{proyectos.length} en total</p>
+        </Link>
 
-          <strong>
-            {
-              proyectos.filter((proyecto) => proyecto.estado === "ACTIVO")
-                .length
-            }
-          </strong>
-
-          <p>Proyectos Actualmente En Ejecución</p>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Personas</span>
-
+        <Link to="/personas" className="dash-card">
+          <span className="dash-card-label">Personas</span>
           <strong>{personas.length}</strong>
+          <p>Registradas en la org</p>
+        </Link>
 
-          <p>Personas Registradas En FLOWOS</p>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Equipos</span>
-
+        <Link to="/equipos" className="dash-card">
+          <span className="dash-card-label">Equipos</span>
           <strong>{equipos.length}</strong>
+          <p>Grupos de trabajo</p>
+        </Link>
 
-          <p>Equipos Registrados En La Organización</p>
-        </div>
-
-        <div className="dashboard-card">
-          <span>Tareas</span>
-
+        <Link to="/tareas" className="dash-card">
+          <span className="dash-card-label">Tareas</span>
           <strong>{tareas.length}</strong>
-
-          <p>Tareas Registradas En FLOWOS</p>
-        </div>
+          <p>En el sistema</p>
+        </Link>
       </div>
 
-      <div className="dashboard-section">
-        <h3>Resumen de tareas</h3>
+      <div className="dash-section">
+        <div className="dash-section-head">
+          <h3>Resumen de tareas</h3>
+          <Link to="/tareas" className="dash-link">
+            Ver todas →
+          </Link>
+        </div>
 
-        <div className="task-summary-grid">
-          <div className="summary-item">
+        <div className="dash-task-grid">
+          <div className="dash-task-item">
             <span>Total</span>
             <strong>{tareas.length}</strong>
           </div>
-
-          <div className="summary-item">
+          <div className="dash-task-item warn">
             <span>Pendientes</span>
-            <strong>
-              {tareas.filter((tarea) => tarea.estado === "PENDIENTE").length}
-            </strong>
+            <strong>{pendientes}</strong>
           </div>
-
-          <div className="summary-item">
+          <div className="dash-task-item info">
             <span>En progreso</span>
-            <strong>
-              {tareas.filter((tarea) => tarea.estado === "EN_PROGRESO").length}
-            </strong>
+            <strong>{enProgreso}</strong>
           </div>
-
-          <div className="summary-item">
+          <div className="dash-task-item ok">
             <span>Finalizadas</span>
-            <strong>
-              {tareas.filter((tarea) => tarea.estado === "FINALIZADA").length}
-            </strong>
+            <strong>{finalizadas}</strong>
           </div>
+        </div>
+      </div>
+
+      <div className="dash-section">
+        <div className="dash-section-head">
+          <h3>Accesos rápidos</h3>
+        </div>
+        <div className="dash-quick">
+          <Link to="/optima" className="dash-quick-item accent">
+            <strong>OPTIMA</strong>
+            <span>Optimizar equipos y tareas</span>
+          </Link>
+          <Link to="/proyectos" className="dash-quick-item">
+            <strong>Proyectos</strong>
+            <span>Gestionar iniciativas</span>
+          </Link>
+          <Link to="/usuarios" className="dash-quick-item">
+            <strong>Usuarios</strong>
+            <span>Cuentas y permisos</span>
+          </Link>
         </div>
       </div>
     </section>

@@ -116,3 +116,20 @@ class TareaResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+
+class MiTareaResponse(BaseModel):
+    id_asignacion: int
+    id_tarea: int
+    nombre_tarea: str
+    id_proyecto: int
+    id_equipo: int
+    prioridad: Optional[str] = None
+    estado_tarea: Optional[str] = None
+    estado_asignacion: str
+    dedicacion: float
+    fecha_inicio: date
+    fecha_limite: date
+    horas_estimadas: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)

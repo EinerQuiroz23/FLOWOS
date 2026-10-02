@@ -11,7 +11,8 @@ from app.models.usuario_model import Usuario
 from app.schemas.tarea_schema import (
     TareaCreate,
     TareaUpdate,
-    TareaResponse
+    TareaResponse, 
+    MiTareaResponse
 )
 
 from app.services.tarea_service import TareaService
@@ -48,6 +49,30 @@ def obtener_tareas(
         usuario.id_organizacion
     )
 
+#=========================================================
+# OBTENER MIS TAREAS    
+
+@router.get(
+    "/mias",
+    response_model=List[MiTareaResponse]
+)
+def obtener_mis_tareas(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role(
+            "ADMIN",
+            "LIDER_PROYECTO",
+            "SECRETARIO",
+            "EMPLEADO"
+        )
+    )
+):
+    service = TareaService(db)
+
+    return service.obtener_mias(
+        id_persona=usuario.id_persona,
+        id_organizacion=usuario.id_organizacion
+    )
 
 # ==========================================================
 # OBTENER POR PROYECTO
@@ -189,3 +214,6 @@ def cambiar_estado(
         nuevo_estado,
         usuario.id_organizacion
     )
+
+
+

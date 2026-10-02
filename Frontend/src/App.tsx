@@ -11,6 +11,13 @@ import Optima from "./pages/Optima/Optima";
 import Login from "./pages/Login/Login";
 import Usuarios from "./pages/Usuario/Usuarios";
 import RegistroEmpleado from "./pages/Registro/Registro_Empleado";
+import RecuperarContrasena from "./pages/RecuperarContrasena/RecuperarContrasena";
+import Organizaciones from "./pages/Organizaciones/Organizaciones";
+import MiPanel from "./pages/MiPanel/MiPanel";
+import MisTareas from "./pages/MisTareas/MisTareas";
+import MisProyectos from "./pages/MisProyectos/MisProyectos";
+import MiEquipo from "./pages/MiEquipo/MiEquipo";
+import MisHabilidades from "./pages/MisHabilidades/MisHabilidades";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -49,23 +56,14 @@ function RutaPorRol({ rolesPermitidos }: RutaPorRolProps) {
 function App() {
   return (
     <Routes>
-      {/* =========================================
-            AUTENTICACIÓN
-        ========================================= */}
-
+      {/* ========== RUTAS PÚBLICAS ========== */}
       <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<RegistroEmpleado />} />
+      <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
 
-      {/* =========================================
-            ÁREA PROTEGIDA
-        ========================================= */}
-
+      {/* ========== ÁREA PROTEGIDA ========== */}
       <Route path="/" element={<RutaProtegida />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
-
-        {/* =========================================
-              DASHBOARD
-              Todos los usuarios autenticados
-          ========================================= */}
 
         <Route path="dashboard" element={<Dashboard />} />
 
@@ -73,70 +71,56 @@ function App() {
           <Route path="usuarios" element={<Usuarios />} />
         </Route>
 
-        {/* =========================================
-              PROYECTOS
-              ADMIN + LÍDER + SECRETARIO + EMPLEADO
-          ========================================= */}
-
         <Route element={<RutaPorRol rolesPermitidos={[1, 2, 3, 4]} />}>
           <Route path="proyectos" element={<Proyectos />} />
         </Route>
-
-        {/* =========================================
-              PERSONAS
-              Todos los usuarios autenticados
-          ========================================= */}
 
         <Route element={<RutaPorRol rolesPermitidos={[1, 2, 3, 4]} />}>
           <Route path="personas" element={<Personas />} />
         </Route>
 
-        {/* =========================================
-              EQUIPOS
-              ADMIN + LÍDER + SECRETARIO + EMPLEADO
-          ========================================= */}
-
         <Route element={<RutaPorRol rolesPermitidos={[1, 2, 3, 4]} />}>
           <Route path="equipos" element={<Equipos />} />
         </Route>
-
-        {/* =========================================
-              TAREAS
-              ADMIN + LÍDER + SECRETARIO + EMPLEADO
-          ========================================= */}
 
         <Route element={<RutaPorRol rolesPermitidos={[1, 2, 3, 4]} />}>
           <Route path="tareas" element={<Tareas />} />
         </Route>
 
-        {/* =========================================
-              OPTIMA
-              SOLO ADMIN
-          ========================================= */}
-
         <Route element={<RutaPorRol rolesPermitidos={[1]} />}>
           <Route path="optima" element={<Optima />} />
         </Route>
 
-        {/* =========================================
-              RUTA NO ENCONTRADA
-          ========================================= */}
+        <Route element={<RutaPorRol rolesPermitidos={[5]} />}>
+          <Route path="organizaciones" element={<Organizaciones />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
+          <Route path="mi-panel" element={<MiPanel />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
+          <Route path="mis-tareas" element={<MisTareas />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
+          <Route path="mis-proyectos" element={<MisProyectos />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
+          <Route path="mi-equipo" element={<MiEquipo />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
+          <Route path="mis-habilidades" element={<MisHabilidades />} />
+        </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-
-        {/* ========================
-            Registro de empleados 
-            ======================== */}
-        <Route path="/registro" element={<RegistroEmpleado />} />
       </Route>
 
-      {/* =========================================
-            RUTA GLOBAL NO ENCONTRADA
-        ========================================= */}
-
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Fallback global */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
-
 export default App;

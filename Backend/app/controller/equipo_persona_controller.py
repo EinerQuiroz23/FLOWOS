@@ -109,6 +109,29 @@ def obtener_por_persona(
     )
 
 
+
+@router.get(
+    "/me",
+    response_model=List[EquipoPersonaResponse]
+)
+def obtener_mis_equipos(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role(
+            "ADMIN",
+            "LIDER_PROYECTO",
+            "SECRETARIO",
+            "EMPLEADO"
+        )
+    )
+):
+    service = EquipoPersonaService(db)
+
+    return service.obtener_por_persona(
+        usuario.id_persona,
+        usuario.id_organizacion
+    )
+
 # ==========================================================
 # OBTENER POR ID
 # ==========================================================

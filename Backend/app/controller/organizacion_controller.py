@@ -4,13 +4,15 @@ from sqlalchemy.orm import Session
 from app.core.authorization import require_any_role
 from app.core.database import get_db
 from app.models.usuario_model import Usuario
-from app.schemas.organizacion_schema import OrganizacionCreate, OrganizacionResponse
+from app.schemas.organizacion_schema import OrganizacionCreate, OrganizacionResponse , OrganizacionConAdmin
 from app.services.organizacion_service import OrganizacionService
 
 from app.core.authorization import require_role
 
 from app.schemas.auth_schema import CrearAdminOrganizacionRequest
 from app.services.auth_service import AuthService
+
+
 
 router = APIRouter(
     prefix="/organizaciones",
@@ -133,3 +135,52 @@ def crear_admin_organizacion(
             status_code=400,
             detail=str(error)
         )
+
+
+@router.get(
+    "",
+    response_model=list[OrganizacionConAdmin]
+)
+def listar_organizaciones(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_role("SUPER_ADMIN"))
+):
+    return OrganizacionService.listar_con_admin(db)
+
+
+@router.patch(
+    "/{id_organizacion}/desactivar",
+    response_model=OrganizacionResponse
+)
+def desactivar_organizacion(
+    id_organizacion: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_role("SUPER_ADMIN"))
+):
+    try:
+        org = OrganizacionService.desactivar(db, id_organizacion)
+        db.commit()
+        db.refresh(org)
+        return org
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+@router.patch(
+    "/{id_organizacion}/activar",
+    response_model=OrganizacionResponse
+)
+def activar_organizacion(
+    id_organizacion: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_role("SUPER_ADMIN"))
+):
+    try:
+        org = OrganizacionService.activar(db, id_organizacion)
+        db.commit()
+        db.refresh(org)
+        return org
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(error))

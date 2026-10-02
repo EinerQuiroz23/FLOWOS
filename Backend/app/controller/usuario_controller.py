@@ -1,7 +1,8 @@
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.authorization import require_role
+from app.core.authorization import require_role, require_any_role
 from app.core.database import get_db
 
 from app.models.usuario_model import Usuario
@@ -13,12 +14,17 @@ from app.schemas.usuario_schema import (
 )
 
 from app.services.usuario_service import UsuarioService
+from app.repositories.usuario_repository import UsuarioRepository
 
 
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuarios"]
 )
+
+
+class CambiarNombreUsuarioRequest(BaseModel):
+    nombre_usuario: str = Field(min_length=3, max_length=100)
 
 
 @router.get(
@@ -36,6 +42,50 @@ def obtener_usuarios(
         db,
         usuario.id_organizacion
     )
+
+
+# ==========================================================
+# CAMBIAR MI NOMBRE DE USUARIO (antes de /{id_usuario})
+# ==========================================================
+
+@router.patch("/me/nombre-usuario")
+def cambiar_mi_nombre_usuario(
+    datos: CambiarNombreUsuarioRequest,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role(
+            "ADMIN",
+            "LIDER_PROYECTO",
+            "SECRETARIO",
+            "EMPLEADO",
+            "SUPER_ADMIN"
+        )
+    )
+):
+    nombre = datos.nombre_usuario.strip()
+
+    if not nombre:
+        raise HTTPException(
+            status_code=400,
+            detail="El nombre de usuario es obligatorio"
+        )
+
+    existente = UsuarioRepository.obtener_por_nombre_usuario(db, nombre)
+
+    if existente is not None and existente.id_usuario != usuario.id_usuario:
+        raise HTTPException(
+            status_code=400,
+            detail="Ese nombre de usuario ya está en uso"
+        )
+
+    usuario.nombre_usuario = nombre
+    db.commit()
+    db.refresh(usuario)
+
+    return {
+        "mensaje": "Nombre de usuario actualizado",
+        "nombre_usuario": usuario.nombre_usuario
+    }
 
 
 @router.get(

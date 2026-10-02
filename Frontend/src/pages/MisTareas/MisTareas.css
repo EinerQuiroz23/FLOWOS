@@ -1,0 +1,163 @@
+.mis-tareas-page {
+  padding: 8px 4px 32px;
+}
+
+.mis-tareas-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .mis-tareas-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mis-tareas-card {
+  background: #151b24;
+  border: 1px solid rgba(232, 90, 100, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.mis-tareas-card h2 {
+  margin: 0 0 8px;
+  color: #f0f4f8;
+  font-size: 20px;
+}
+
+.mis-tareas-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #8b9cb3;
+}
+
+.mis-tareas-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mis-tareas-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #2a3444;
+  background: #0f1419;
+  color: #c5d0dc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mis-tareas-item:hover {
+  border-color: rgba(232, 90, 100, 0.4);
+}
+
+.mis-tareas-item.active {
+  border-color: #e85a64;
+  background: rgba(232, 90, 100, 0.08);
+}
+
+.mis-tareas-item-nombre {
+  font-weight: 600;
+  color: #e8eef6;
+  font-size: 14px;
+}
+
+.mis-tareas-item-meta {
+  font-size: 12px;
+  color: #8b9cb3;
+}
+
+.mis-tareas-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #e85a64;
+  font-weight: 700;
+}
+
+.mis-tareas-grid-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.mis-tareas-grid-meta div {
+  background: #0f1419;
+  border: 1px solid #2a3444;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.mis-tareas-grid-meta span {
+  display: block;
+  font-size: 11px;
+  color: #8b9cb3;
+  margin-bottom: 4px;
+}
+
+.mis-tareas-grid-meta strong {
+  color: #f0f4f8;
+  font-size: 14px;
+}
+
+.mis-tareas-avance {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #2a3444;
+}
+
+.mis-tareas-avance-head {
+  display: flex;
+  justify-content: space-between;
+  color: #c5d0dc;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.mis-tareas-avance-head strong {
+  color: #e85a64;
+}
+
+.mis-tareas-bar {
+  height: 10px;
+  background: #1e2734;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mis-tareas-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #d64550, #e85a64);
+}
+
+.mis-tareas-faltante {
+  margin: 12px 0 6px;
+  color: #e8eef6;
+  font-size: 14px;
+}
+
+.mis-tareas-nota {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7a8d;
+}
+
+.mis-tareas-msg,
+.mis-tareas-error {
+  padding: 24px;
+  color: #c5d0dc;
+}
+
+.mis-tareas-error {
+  color: #ff8a95;
+}

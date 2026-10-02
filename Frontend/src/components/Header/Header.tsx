@@ -9,6 +9,41 @@ interface InformacionPagina {
 }
 
 function obtenerInformacionPagina(ruta: string): InformacionPagina {
+  if (ruta.startsWith("/mi-panel")) {
+    return {
+      titulo: "Mi panel",
+      descripcion: "Tu perfil, capacidad y configuración en FlowOS.",
+    };
+  }
+
+  if (ruta.startsWith("/mis-tareas")) {
+    return {
+      titulo: "Mis tareas",
+      descripcion: "Consulta el avance y el detalle de tus asignaciones.",
+    };
+  }
+
+  if (ruta.startsWith("/mis-proyectos")) {
+    return {
+      titulo: "Mis proyectos",
+      descripcion: "Proyectos en los que participas.",
+    };
+  }
+
+  if (ruta.startsWith("/mi-equipo")) {
+    return {
+      titulo: "Mi equipo",
+      descripcion: "Equipos a los que perteneces y sus integrantes.",
+    };
+  }
+
+  if (ruta.startsWith("/mis-habilidades")) {
+    return {
+      titulo: "Mis habilidades",
+      descripcion: "Habilidades registradas en tu perfil profesional.",
+    };
+  }
+
   if (ruta.startsWith("/proyectos")) {
     return {
       titulo: "Proyectos",
@@ -51,6 +86,13 @@ function obtenerInformacionPagina(ruta: string): InformacionPagina {
     };
   }
 
+  if (ruta.startsWith("/organizaciones")) {
+    return {
+      titulo: "Organizaciones",
+      descripcion: "Crea organizaciones y asigna sus administradores.",
+    };
+  }
+
   return {
     titulo: "Dashboard",
     descripcion: "Visión general del estado de tu organización.",
@@ -67,6 +109,8 @@ function obtenerNombreRol(idRol: number | undefined): string {
       return "Secretario";
     case 4:
       return "Empleado";
+    case 5:
+      return "Super Admin";
     default:
       return "Usuario";
   }

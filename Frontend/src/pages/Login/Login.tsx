@@ -140,9 +140,7 @@ function Login() {
                   <button
                     type="button"
                     className="login-forgot-button"
-                    onClick={() => {
-                      // Próximamente: recuperación de contraseña.
-                    }}
+                    onClick={() => navigate("/recuperar-contrasena")}
                   >
                     ¿Olvidaste tu contraseña?
                   </button>

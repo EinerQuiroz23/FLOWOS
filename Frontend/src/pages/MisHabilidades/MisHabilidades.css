@@ -1,0 +1,107 @@
+.mis-hab-page {
+  padding: 8px 4px 32px;
+}
+
+.mis-hab-card {
+  background: #151b24;
+  border: 1px solid rgba(232, 90, 100, 0.18);
+  border-radius: 14px;
+  padding: 22px;
+  max-width: 720px;
+}
+
+.mis-hab-card h2 {
+  margin: 0 0 6px;
+  color: #f0f4f8;
+}
+
+.mis-hab-card h3 {
+  margin: 20px 0 12px;
+  color: #e8eef6;
+  font-size: 15px;
+}
+
+.mis-hab-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #8b9cb3;
+}
+
+.mis-hab-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mis-hab-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f1419;
+  border: 1px solid #2a3444;
+  font-size: 13px;
+  color: #c5d0dc;
+}
+
+.mis-hab-list strong {
+  color: #e8eef6;
+}
+
+.mis-hab-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.mis-hab-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #b0c0d4;
+}
+
+.mis-hab-form select,
+.mis-hab-form input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #2a3444;
+  background: #0f1419;
+  color: #f0f4f8;
+}
+
+.mis-hab-form button {
+  padding: 11px 14px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #d64550, #b8323c);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mis-hab-ok {
+  margin-top: 12px;
+  color: #7ddea0;
+  font-size: 13px;
+}
+
+.mis-hab-error,
+.mis-hab-msg {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.mis-hab-error {
+  color: #ff8a95;
+}
+.mis-hab-msg {
+  color: #c5d0dc;
+}

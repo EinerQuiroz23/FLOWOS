@@ -227,16 +227,23 @@
 }
 
 .sidebar-link-active {
-  background: linear-gradient(
-    90deg,
-    rgba(220, 38, 38, 0.19),
-    rgba(220, 38, 38, 0.07)
-  );
-
-  color: #ffffff;
+  background: rgba(239, 68, 68, 0.14);
+  color: #fecaca;
+  border-left: 3px solid #ef4444;
+  padding-left: 7px; /* compensa el borde para que no salte */
 }
 
+.sidebar-link-active .sidebar-link-icon,
+.sidebar-link-active .sidebar-link-name {
+  color: #f87171;
+}
+
+/* Quita o comenta el ::before si ya usas border-left, para no duplicar */
 .sidebar-link-active::before {
+  display: none;
+}
+
+/* .sidebar-link-active::before {
   content: "";
 
   position: absolute;
@@ -251,7 +258,7 @@
   background: #ef4444;
 
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
-}
+} */
 
 .sidebar-link-icon {
   display: flex;

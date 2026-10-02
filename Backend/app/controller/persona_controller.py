@@ -49,6 +49,39 @@ def obtener_personas(
     )
 
 
+
+
+@router.get(
+    "/me",
+    response_model=PersonaResponse
+)
+def obtener_mi_persona(
+    usuario: Usuario = Depends(
+        require_any_role(
+            "ADMIN",
+            "LIDER_PROYECTO",
+            "SECRETARIO",
+            "EMPLEADO"
+        )
+    ),
+    db: Session = Depends(get_db)
+):
+    service = PersonaService(db)
+
+    persona = service.obtener_por_id(
+        usuario.id_persona,
+        usuario.id_organizacion
+    )
+
+    if persona is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró tu perfil de persona."
+        )
+
+    return persona
+
+
 # ==========================================================
 # OBTENER PERSONA POR ID
 # ==========================================================

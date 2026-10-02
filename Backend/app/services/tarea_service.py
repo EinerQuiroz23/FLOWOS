@@ -389,3 +389,57 @@ class TareaService:
             self.db.rollback()
 
             raise
+
+
+    def obtener_mias(self, id_persona: int, id_organizacion: int) -> list[dict]:
+        from app.models.equipo_persona_model import EquipoPersona
+        from app.models.asignacion_tarea_model import AsignacionTarea
+        from app.models.tarea_model import Tarea
+        from app.models.proyecto_model import Proyecto
+
+        filas = (
+            self.db.query(
+                AsignacionTarea,
+                Tarea,
+            )
+            .join(
+                EquipoPersona,
+                EquipoPersona.id_equipo_persona == AsignacionTarea.id_equipo_persona,
+            )
+            .join(
+                Tarea,
+                Tarea.id_tarea == AsignacionTarea.id_tarea,
+            )
+            .join(
+                Proyecto,
+                Proyecto.id_proyecto == Tarea.id_proyecto,
+            )
+            .filter(
+                EquipoPersona.id_persona == id_persona,
+                Proyecto.id_organizacion == id_organizacion,
+            )
+            .order_by(AsignacionTarea.fecha_limite.asc())
+            .all()
+        )
+
+        resultado = []
+
+        for asignacion, tarea in filas:
+            resultado.append({
+                "id_asignacion": asignacion.id_asignacion,
+                "id_tarea": tarea.id_tarea,
+                "nombre_tarea": tarea.nombre,
+                "id_proyecto": tarea.id_proyecto,
+                "id_equipo": tarea.id_equipo,
+                "prioridad": getattr(tarea, "prioridad", None),
+                "estado_tarea": getattr(tarea, "estado", None),
+                "estado_asignacion": asignacion.estado,
+                "dedicacion": float(asignacion.dedicacion),
+                "fecha_inicio": asignacion.fecha_inicio,
+                "fecha_limite": asignacion.fecha_limite,
+                "horas_estimadas": float(tarea.horas_estimadas)
+                if getattr(tarea, "horas_estimadas", None) is not None
+                else None,
+            })
+
+        return resultado

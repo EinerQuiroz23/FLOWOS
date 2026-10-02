@@ -1,0 +1,140 @@
+.mi-eq-page {
+  padding: 8px 4px 32px;
+}
+
+.mi-eq-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .mi-eq-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mi-eq-card {
+  background: #151b24;
+  border: 1px solid rgba(232, 90, 100, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.mi-eq-card h2 {
+  margin: 0 0 8px;
+  color: #f0f4f8;
+  font-size: 20px;
+}
+
+.mi-eq-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #8b9cb3;
+  line-height: 1.45;
+}
+
+.mi-eq-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mi-eq-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #2a3444;
+  background: #0f1419;
+  color: #c5d0dc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mi-eq-item strong {
+  color: #e8eef6;
+  font-size: 14px;
+}
+.mi-eq-item span {
+  font-size: 12px;
+  color: #8b9cb3;
+}
+
+.mi-eq-item.active {
+  border-color: #e85a64;
+  background: rgba(232, 90, 100, 0.08);
+}
+
+.mi-eq-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #e85a64;
+  font-weight: 700;
+}
+
+.mi-eq-sub {
+  margin: 18px 0 10px;
+  color: #e8eef6;
+  font-size: 15px;
+}
+
+.mi-eq-members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mi-eq-members li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0f1419;
+  border: 1px solid #2a3444;
+  font-size: 13px;
+  color: #c5d0dc;
+}
+
+.mi-eq-members strong {
+  color: #e8eef6;
+}
+
+.mi-eq-chat-placeholder {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(232, 90, 100, 0.35);
+  background: rgba(232, 90, 100, 0.05);
+}
+
+.mi-eq-chat-placeholder strong {
+  display: block;
+  color: #ff8a95;
+  margin-bottom: 6px;
+}
+
+.mi-eq-chat-placeholder p {
+  margin: 0;
+  font-size: 13px;
+  color: #8b9cb3;
+}
+
+.mi-eq-msg,
+.mi-eq-error {
+  padding: 24px;
+  color: #c5d0dc;
+}
+.mi-eq-error {
+  color: #ff8a95;
+}
