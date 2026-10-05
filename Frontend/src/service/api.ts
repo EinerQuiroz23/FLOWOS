@@ -411,3 +411,33 @@ export async function obtenerOcupacionPersona(
   });
   return procesarRespuesta<OcupacionPersona>(respuesta);
 }
+
+export interface MensajeEquipo {
+  id_mensaje: number;
+  id_equipo: number;
+  id_persona: number;
+  nombre_persona: string;
+  contenido: string;
+  fecha_creacion: string;
+}
+
+export async function obtenerMensajesEquipo(
+  idEquipo: number,
+): Promise<MensajeEquipo[]> {
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/mensajes`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<MensajeEquipo[]>(respuesta);
+}
+
+export async function enviarMensajeEquipo(
+  idEquipo: number,
+  contenido: string,
+): Promise<MensajeEquipo> {
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/mensajes`, {
+    method: "POST",
+    headers: obtenerHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  return procesarRespuesta<MensajeEquipo>(respuesta);
+}

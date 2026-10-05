@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   obtenerMisEquiposPersona,
   obtenerEquipos,
   obtenerProyectos,
   obtenerPersonas,
+  obtenerPersonasPorEquipo,
+  obtenerMensajesEquipo,
+  enviarMensajeEquipo,
   type EquipoPersonaItem,
+  type MensajeEquipo,
 } from "../../service/api";
 import type { Equipo } from "../../types/equipo";
 import type { Proyecto } from "../../types/proyecto";
@@ -32,21 +42,25 @@ function MiEquipo() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  const [mensajes, setMensajes] = useState<MensajeEquipo[]>([]);
+  const [texto, setTexto] = useState("");
+  const [cargandoChat, setCargandoChat] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [errorChat, setErrorChat] = useState("");
+
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const cargar = async () => {
       setCargando(true);
       setError("");
       try {
-        const [misRels, todosEquipos, proyectos, personas, todasRels] =
-          await Promise.all([
-            obtenerMisEquiposPersona(),
-            obtenerEquipos(),
-            obtenerProyectos(),
-            obtenerPersonas(),
-            // integrantes: usamos lista por equipo vía fetch individual sería mejor;
-            // si no hay endpoint bulk, filtramos con GET por cada equipo más abajo
-            Promise.resolve([] as EquipoPersonaItem[]),
-          ]);
+        const [misRels, todosEquipos, proyectos, personas] = await Promise.all([
+          obtenerMisEquiposPersona(),
+          obtenerEquipos(),
+          obtenerProyectos(),
+          obtenerPersonas(),
+        ]);
 
         const mapaEquipos = new Map<number, Equipo>();
         todosEquipos.forEach((e) => mapaEquipos.set(e.id_equipo, e));
@@ -66,21 +80,9 @@ function MiEquipo() {
 
           const proy = mapaProyectos.get(eq.id_proyecto);
 
-          // Integrantes del equipo
           let integrantesRel: EquipoPersonaItem[] = [];
           try {
-            const res = await fetch(
-              `http://127.0.0.1:8000/equipos-personas/equipo/${r.id_equipo}`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${localStorage.getItem("flowos_token") || ""}`,
-                },
-              },
-            );
-            if (res.ok) {
-              integrantesRel = await res.json();
-            }
+            integrantesRel = await obtenerPersonasPorEquipo(r.id_equipo);
           } catch {
             integrantesRel = [];
           }
@@ -121,6 +123,63 @@ function MiEquipo() {
     cargar();
   }, []);
 
+  const cargarMensajes = useCallback(async (idEquipo: number) => {
+    setCargandoChat(true);
+    setErrorChat("");
+    try {
+      const data = await obtenerMensajesEquipo(idEquipo);
+      setMensajes(data);
+    } catch (err) {
+      setMensajes([]);
+      setErrorChat(
+        err instanceof Error ? err.message : "No se pudieron cargar mensajes",
+      );
+    } finally {
+      setCargandoChat(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!seleccionado) {
+      setMensajes([]);
+      return;
+    }
+    cargarMensajes(seleccionado.id_equipo);
+
+    // Refresco cada 5 s (chat casi en tiempo real sin WebSocket)
+    const id = window.setInterval(() => {
+      cargarMensajes(seleccionado.id_equipo);
+    }, 5000);
+
+    return () => window.clearInterval(id);
+  }, [seleccionado, cargarMensajes]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensajes]);
+
+  const manejarEnvio = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!seleccionado || !texto.trim() || enviando) return;
+
+    setEnviando(true);
+    setErrorChat("");
+    try {
+      const nuevo = await enviarMensajeEquipo(
+        seleccionado.id_equipo,
+        texto.trim(),
+      );
+      setMensajes((prev) => [...prev, nuevo]);
+      setTexto("");
+    } catch (err) {
+      setErrorChat(
+        err instanceof Error ? err.message : "No se pudo enviar el mensaje",
+      );
+    } finally {
+      setEnviando(false);
+    }
+  };
+
   if (cargando) {
     return <div className="mi-eq-msg">Cargando tus equipos...</div>;
   }
@@ -135,7 +194,7 @@ function MiEquipo() {
         <section className="mi-eq-card">
           <h2>Mis equipos</h2>
           <p className="mi-eq-hint">
-            Selecciona un equipo para ver integrantes.
+            Selecciona un equipo para ver integrantes y el chat.
           </p>
 
           {equipos.length === 0 ? (
@@ -194,9 +253,51 @@ function MiEquipo() {
                 </ul>
               )}
 
-              <div className="mi-eq-chat-placeholder">
-                <strong>Chat del equipo</strong>
-                <p>Próximamente: mensajería en tiempo real con este grupo.</p>
+              {/* CHAT */}
+              <div className="mi-eq-chat">
+                <div className="mi-eq-chat-header">
+                  <strong>Chat del equipo</strong>
+                  <span>Actualiza cada 5 s</span>
+                </div>
+
+                <div className="mi-eq-chat-messages">
+                  {cargandoChat && mensajes.length === 0 ? (
+                    <p className="mi-eq-hint">Cargando mensajes...</p>
+                  ) : mensajes.length === 0 ? (
+                    <p className="mi-eq-hint">
+                      Aún no hay mensajes. Escribe el primero.
+                    </p>
+                  ) : (
+                    mensajes.map((m) => (
+                      <div key={m.id_mensaje} className="mi-eq-msg-bubble">
+                        <div className="mi-eq-msg-meta">
+                          <strong>{m.nombre_persona}</strong>
+                          <span>
+                            {new Date(m.fecha_creacion).toLocaleString()}
+                          </span>
+                        </div>
+                        <p>{m.contenido}</p>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {errorChat && <p className="mi-eq-chat-error">{errorChat}</p>}
+
+                <form className="mi-eq-chat-form" onSubmit={manejarEnvio}>
+                  <input
+                    type="text"
+                    value={texto}
+                    onChange={(e) => setTexto(e.target.value)}
+                    placeholder="Escribe un mensaje..."
+                    maxLength={2000}
+                    disabled={enviando}
+                  />
+                  <button type="submit" disabled={enviando || !texto.trim()}>
+                    {enviando ? "..." : "Enviar"}
+                  </button>
+                </form>
               </div>
             </>
           )}

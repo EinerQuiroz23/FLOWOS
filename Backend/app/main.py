@@ -24,7 +24,8 @@ from app.controller.rol_controller import router as rol_router
 from app.controller.usuario_controller import router as usuario_router
 from app.optima.controllers.optima_controller import router as optima_router
 from app.controller.vista_controller import router as vista_router
-
+from app.controller.mensaje_equipo_controller import router as mensaje_equipo_router
+from app.controller.chat_ws import router as chat_ws_router 
 
 
 
@@ -114,6 +115,9 @@ app.include_router(organizacion_router)
 app.include_router(rol_router)
 app.include_router(usuario_router)
 app.include_router(vista_router)
+app.include_router(mensaje_equipo_router)
+app.include_router(chat_ws_router)    
+
 
 @app.get("/")
 def root():
