@@ -23,6 +23,10 @@ from app.controller.organizacion_controller import router as organizacion_router
 from app.controller.rol_controller import router as rol_router
 from app.controller.usuario_controller import router as usuario_router
 from app.optima.controllers.optima_controller import router as optima_router
+from app.controller.vista_controller import router as vista_router
+
+
+
 
 
 def _csv(value: str) -> list[str]:
@@ -109,7 +113,7 @@ app.include_router(auth_router)
 app.include_router(organizacion_router)
 app.include_router(rol_router)
 app.include_router(usuario_router)
-
+app.include_router(vista_router)
 
 @app.get("/")
 def root():

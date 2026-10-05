@@ -1,5 +1,5 @@
 from typing import List
- 
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -43,7 +43,7 @@ class OptimaRepository:
         return self.db.scalar(consulta)
 
     # ==========================================================
-    # CANDIDATOS PARA UNA TAREA
+    # CANDIDATOS — EQUIPO DE LA TAREA
     # ==========================================================
 
     def obtener_candidatos_por_tarea(
@@ -74,20 +74,49 @@ class OptimaRepository:
                 Tarea.id_tarea == id_tarea,
                 Proyecto.id_organizacion == id_organizacion,
                 Persona.id_organizacion == id_organizacion,
-
-                # Persona activa
                 Persona.estado.is_(True),
-
-                # Equipo activo
                 Equipo.estado == "ACTIVO",
-
-                # La persona sigue perteneciendo al equipo
                 EquipoPersona.fecha_fin.is_(None)
             )
             .distinct()
         )
 
-        return self.db.scalars(consulta).all()
+        return list(self.db.scalars(consulta).all())
+
+    # ==========================================================
+    # CANDIDATOS — PROYECTO (todos los equipos del proyecto)
+    # ==========================================================
+
+    def obtener_candidatos_por_proyecto(
+        self,
+        id_proyecto: int,
+        id_organizacion: int
+    ) -> List[Persona]:
+
+        return self.obtener_personas_activas_proyecto(
+            id_proyecto,
+            id_organizacion
+        )
+
+    # ==========================================================
+    # CANDIDATOS — ORGANIZACIÓN (todas las personas activas)
+    # ==========================================================
+
+    def obtener_candidatos_por_organizacion(
+        self,
+        id_organizacion: int
+    ) -> List[Persona]:
+
+        consulta = (
+            select(Persona)
+            .where(
+                Persona.id_organizacion == id_organizacion,
+                Persona.estado.is_(True)
+            )
+            .distinct()
+        )
+
+        return list(self.db.scalars(consulta).all())
 
     # ==========================================================
     # HABILIDADES REQUERIDAS POR TAREA
@@ -104,8 +133,7 @@ class OptimaRepository:
             )
             .join(
                 Habilidad,
-                Habilidad.id_habilidad
-                == TareaHabilidad.id_habilidad
+                Habilidad.id_habilidad == TareaHabilidad.id_habilidad
             )
             .where(
                 TareaHabilidad.id_tarea == id_tarea,
@@ -134,8 +162,7 @@ class OptimaRepository:
             )
             .join(
                 Habilidad,
-                Habilidad.id_habilidad
-                == PersonaHabilidad.id_habilidad
+                Habilidad.id_habilidad == PersonaHabilidad.id_habilidad
             )
             .where(
                 PersonaHabilidad.id_persona.in_(ids_personas),
@@ -184,9 +211,7 @@ class OptimaRepository:
         resultados = self.db.execute(consulta).all()
 
         return {
-            fila.id_persona: float(
-                fila.carga_actual or 0
-            )
+            fila.id_persona: float(fila.carga_actual or 0)
             for fila in resultados
         }
 
@@ -228,7 +253,7 @@ class OptimaRepository:
             )
         )
 
-        return self.db.scalars(consulta).all()
+        return list(self.db.scalars(consulta).all())
 
     # ==========================================================
     # PERSONAS ACTIVAS DEL PROYECTO
@@ -244,30 +269,20 @@ class OptimaRepository:
             select(Persona)
             .join(
                 EquipoPersona,
-                EquipoPersona.id_persona
-                == Persona.id_persona
+                EquipoPersona.id_persona == Persona.id_persona
             )
             .join(
                 Equipo,
-                Equipo.id_equipo
-                == EquipoPersona.id_equipo
+                Equipo.id_equipo == EquipoPersona.id_equipo
             )
             .where(
                 Persona.id_organizacion == id_organizacion,
-
-                # Persona activa
                 Persona.estado.is_(True),
-
-                # Equipo perteneciente al proyecto
                 Equipo.id_proyecto == id_proyecto,
-
-                # Equipo activo
                 Equipo.estado == "ACTIVO",
-
-                # Pertenencia actual al equipo
                 EquipoPersona.fecha_fin.is_(None)
             )
             .distinct()
         )
 
-        return self.db.scalars(consulta).all()
+        return list(self.db.scalars(consulta).all())

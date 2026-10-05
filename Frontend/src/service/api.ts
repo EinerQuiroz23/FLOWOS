@@ -2,10 +2,9 @@ import type { Proyecto } from "../types/proyecto";
 import type { Persona } from "../types/persona";
 import type { Equipo } from "../types/equipo";
 import type { Tarea } from "../types/tarea";
-import type { CandidatoOptima } from "../types/optima";
+import type { CandidatoOptima, PropuestaEquipo } from "../types/optima";
 import type { Usuario, UsuarioCreate, UsuarioUpdate } from "../types/usuario";
 import type { Rol } from "../types/rol";
-import type { PropuestaEquipo } from "../types/optima";
 
 const API_URL = "http://127.0.0.1:8000";
 
@@ -33,7 +32,10 @@ async function procesarRespuesta<T>(respuesta: Response): Promise<T> {
       const error = await respuesta.json();
 
       if (error.detail) {
-        mensaje = error.detail;
+        mensaje =
+          typeof error.detail === "string"
+            ? error.detail
+            : JSON.stringify(error.detail);
       }
 
       if (error.message) {
@@ -61,6 +63,13 @@ export async function obtenerProyectos(): Promise<Proyecto[]> {
   return procesarRespuesta<Proyecto[]>(respuesta);
 }
 
+export async function obtenerProyecto(idProyecto: number): Promise<Proyecto> {
+  const respuesta = await fetch(`${API_URL}/proyectos/${idProyecto}`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<Proyecto>(respuesta);
+}
+
 // =========================================================
 // PERSONAS
 // =========================================================
@@ -71,6 +80,13 @@ export async function obtenerPersonas(): Promise<Persona[]> {
   });
 
   return procesarRespuesta<Persona[]>(respuesta);
+}
+
+export async function obtenerMiPersona(): Promise<Persona> {
+  const respuesta = await fetch(`${API_URL}/personas/me`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<Persona>(respuesta);
 }
 
 // =========================================================
@@ -85,6 +101,13 @@ export async function obtenerEquipos(): Promise<Equipo[]> {
   return procesarRespuesta<Equipo[]>(respuesta);
 }
 
+export async function obtenerEquipo(idEquipo: number): Promise<Equipo> {
+  const respuesta = await fetch(`${API_URL}/equipos/${idEquipo}`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<Equipo>(respuesta);
+}
+
 // =========================================================
 // TAREAS
 // =========================================================
@@ -97,18 +120,104 @@ export async function obtenerTareas(): Promise<Tarea[]> {
   return procesarRespuesta<Tarea[]>(respuesta);
 }
 
+export async function obtenerTareasPorProyecto(
+  idProyecto: number,
+): Promise<Tarea[]> {
+  const respuesta = await fetch(`${API_URL}/tareas/proyecto/${idProyecto}`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<Tarea[]>(respuesta);
+}
+
+export interface MiTarea {
+  id_asignacion: number;
+  id_tarea: number;
+  nombre_tarea: string;
+  id_proyecto: number;
+  id_equipo: number;
+  prioridad: string | null;
+  estado_tarea: string | null;
+  estado_asignacion: string;
+  dedicacion: number;
+  fecha_inicio: string;
+  fecha_limite: string;
+  horas_estimadas: number | null;
+}
+
+export async function obtenerMisTareas(): Promise<MiTarea[]> {
+  const respuesta = await fetch(`${API_URL}/tareas/mias`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<MiTarea[]>(respuesta);
+}
+
 // =========================================================
 // OPTIMA
 // =========================================================
 
+export type AlcanceOptima = "equipo" | "proyecto" | "organizacion";
+
 export async function evaluarTareaOptima(
   idTarea: number,
+  alcance: AlcanceOptima = "equipo",
 ): Promise<CandidatoOptima[]> {
-  const respuesta = await fetch(`${API_URL}/optima/tarea/${idTarea}`, {
-    headers: obtenerHeaders(),
-  });
+  const params = new URLSearchParams({ alcance });
+
+  const respuesta = await fetch(
+    `${API_URL}/optima/tarea/${idTarea}?${params.toString()}`,
+    {
+      headers: obtenerHeaders(),
+    },
+  );
 
   return procesarRespuesta<CandidatoOptima[]>(respuesta);
+}
+
+export async function proponerEquipoOptima(
+  idProyecto: number,
+): Promise<PropuestaEquipo> {
+  const respuesta = await fetch(
+    `${API_URL}/optima/proyecto/${idProyecto}/propuesta-equipo`,
+    {
+      headers: obtenerHeaders(),
+    },
+  );
+
+  return procesarRespuesta<PropuestaEquipo>(respuesta);
+}
+
+export interface OptimaConfirmarResponse {
+  id_proyecto: number;
+  id_equipo: number;
+  nombre_equipo: string;
+  id_lider: number | null;
+  integrantes_agregados: number;
+  asignaciones_creadas: number;
+  detalle_asignaciones: {
+    id_asignacion: number;
+    id_tarea: number;
+    nombre_tarea: string;
+    id_persona: number;
+    persona: string;
+  }[];
+  mensaje: string;
+}
+
+export async function confirmarPropuestaOptima(
+  idProyecto: number,
+  nombreEquipo?: string,
+): Promise<OptimaConfirmarResponse> {
+  const respuesta = await fetch(
+    `${API_URL}/optima/proyecto/${idProyecto}/confirmar`,
+    {
+      method: "POST",
+      headers: obtenerHeaders(),
+      body: JSON.stringify({
+        nombre_equipo: nombreEquipo || null,
+      }),
+    },
+  );
+  return procesarRespuesta<OptimaConfirmarResponse>(respuesta);
 }
 
 // =========================================================
@@ -178,48 +287,6 @@ export async function obtenerRoles(): Promise<Rol[]> {
   });
 
   return procesarRespuesta<Rol[]>(respuesta);
-}
-
-export async function proponerEquipoOptima(
-  idProyecto: number,
-): Promise<PropuestaEquipo> {
-  const respuesta = await fetch(
-    `${API_URL}/optima/proyecto/${idProyecto}/propuesta-equipo`,
-    {
-      headers: obtenerHeaders(),
-    },
-  );
-
-  return procesarRespuesta<PropuestaEquipo>(respuesta);
-}
-
-export interface MiTarea {
-  id_asignacion: number;
-  id_tarea: number;
-  nombre_tarea: string;
-  id_proyecto: number;
-  id_equipo: number;
-  prioridad: string | null;
-  estado_tarea: string | null;
-  estado_asignacion: string;
-  dedicacion: number;
-  fecha_inicio: string;
-  fecha_limite: string;
-  horas_estimadas: number | null;
-}
-
-export async function obtenerMiPersona(): Promise<Persona> {
-  const respuesta = await fetch(`${API_URL}/personas/me`, {
-    headers: obtenerHeaders(),
-  });
-  return procesarRespuesta<Persona>(respuesta);
-}
-
-export async function obtenerMisTareas(): Promise<MiTarea[]> {
-  const respuesta = await fetch(`${API_URL}/tareas/mias`, {
-    headers: obtenerHeaders(),
-  });
-  return procesarRespuesta<MiTarea[]>(respuesta);
 }
 
 export async function cambiarNombreUsuario(nombre_usuario: string): Promise<{
@@ -298,6 +365,10 @@ export async function crearMiHabilidad(datos: {
   return procesarRespuesta<PersonaHabilidad>(respuesta);
 }
 
+// =========================================================
+// EQUIPOS - PERSONAS
+// =========================================================
+
 export interface EquipoPersonaItem {
   id_equipo_persona: number;
   id_equipo: number;
@@ -315,30 +386,6 @@ export async function obtenerMisEquiposPersona(): Promise<EquipoPersonaItem[]> {
   return procesarRespuesta<EquipoPersonaItem[]>(respuesta);
 }
 
-// Si aún no tienes detalle por id:
-export async function obtenerEquipo(idEquipo: number): Promise<Equipo> {
-  const respuesta = await fetch(`${API_URL}/equipos/${idEquipo}`, {
-    headers: obtenerHeaders(),
-  });
-  return procesarRespuesta<Equipo>(respuesta);
-}
-
-export async function obtenerProyecto(idProyecto: number): Promise<Proyecto> {
-  const respuesta = await fetch(`${API_URL}/proyectos/${idProyecto}`, {
-    headers: obtenerHeaders(),
-  });
-  return procesarRespuesta<Proyecto>(respuesta);
-}
-
-export async function obtenerTareasPorProyecto(
-  idProyecto: number,
-): Promise<Tarea[]> {
-  const respuesta = await fetch(`${API_URL}/tareas/proyecto/${idProyecto}`, {
-    headers: obtenerHeaders(),
-  });
-  return procesarRespuesta<Tarea[]>(respuesta);
-}
-
 export async function obtenerPersonasPorEquipo(
   idEquipo: number,
 ): Promise<EquipoPersonaItem[]> {
@@ -347,4 +394,20 @@ export async function obtenerPersonasPorEquipo(
     { headers: obtenerHeaders() },
   );
   return procesarRespuesta<EquipoPersonaItem[]>(respuesta);
+}
+
+export interface OcupacionPersona {
+  id_persona: number;
+  capacidad_horas_semana: number;
+  ocupacion_pct: number;
+  disponibilidad_pct: number;
+}
+
+export async function obtenerOcupacionPersona(
+  idPersona: number,
+): Promise<OcupacionPersona> {
+  const respuesta = await fetch(`${API_URL}/personas/${idPersona}/ocupacion`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<OcupacionPersona>(respuesta);
 }

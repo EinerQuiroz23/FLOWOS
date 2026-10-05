@@ -5,6 +5,8 @@ import {
   obtenerProyectos,
   evaluarTareaOptima,
   proponerEquipoOptima,
+  confirmarPropuestaOptima,
+  type AlcanceOptima,
 } from "../../service/api";
 
 import type { Tarea } from "../../types/tarea";
@@ -15,6 +17,17 @@ import "./Optima.css";
 
 type ModoOptima = "tarea" | "equipo";
 
+function textoAlcance(alcance: AlcanceOptima): string {
+  switch (alcance) {
+    case "proyecto":
+      return "personas en equipos de este proyecto";
+    case "organizacion":
+      return "personas activas de toda la organización";
+    default:
+      return "integrantes activos del equipo responsable de esta tarea";
+  }
+}
+
 function Optima() {
   const [modo, setModo] = useState<ModoOptima>("tarea");
 
@@ -23,6 +36,7 @@ function Optima() {
     null,
   );
   const [candidatos, setCandidatos] = useState<CandidatoOptima[]>([]);
+  const [alcance, setAlcance] = useState<AlcanceOptima>("equipo");
 
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState<
@@ -31,6 +45,10 @@ function Optima() {
   const [propuesta, setPropuesta] = useState<PropuestaEquipo | null>(null);
 
   const [cargando, setCargando] = useState(false);
+
+  const [confirmando, setConfirmando] = useState(false);
+  const [msgConfirmacion, setMsgConfirmacion] = useState("");
+  const [errConfirmacion, setErrConfirmacion] = useState("");
 
   useEffect(() => {
     obtenerTareas()
@@ -42,12 +60,15 @@ function Optima() {
       .catch((error) => console.error("Error al obtener proyectos:", error));
   }, []);
 
-  const evaluarTarea = async (idTarea: number) => {
+  const evaluarTarea = async (
+    idTarea: number,
+    alcanceActual: AlcanceOptima = alcance,
+  ) => {
     try {
       setCargando(true);
       setTareaSeleccionada(idTarea);
 
-      const resultados = await evaluarTareaOptima(idTarea);
+      const resultados = await evaluarTareaOptima(idTarea, alcanceActual);
 
       const resultadosOrdenados = [...resultados].sort((a, b) => {
         if (a.elegible && !b.elegible) return -1;
@@ -70,6 +91,8 @@ function Optima() {
       setCargando(true);
       setProyectoSeleccionado(idProyecto);
       setPropuesta(null);
+      setMsgConfirmacion("");
+      setErrConfirmacion("");
 
       const data = await proponerEquipoOptima(idProyecto);
       setPropuesta(data);
@@ -78,6 +101,30 @@ function Optima() {
       setPropuesta(null);
     } finally {
       setCargando(false);
+    }
+  };
+
+  const confirmarAsignacion = async () => {
+    if (!proyectoSeleccionado || !propuesta) return;
+
+    setConfirmando(true);
+    setMsgConfirmacion("");
+    setErrConfirmacion("");
+
+    try {
+      const data = await confirmarPropuestaOptima(
+        proyectoSeleccionado,
+        `OPTIMA - ${propuesta.proyecto}`,
+      );
+      setMsgConfirmacion(data.mensaje);
+    } catch (err) {
+      setErrConfirmacion(
+        err instanceof Error
+          ? err.message
+          : "No se pudo confirmar la asignación",
+      );
+    } finally {
+      setConfirmando(false);
     }
   };
 
@@ -124,6 +171,8 @@ function Optima() {
             setModo("tarea");
             setPropuesta(null);
             setProyectoSeleccionado(null);
+            setMsgConfirmacion("");
+            setErrConfirmacion("");
           }}
         >
           Análisis por tarea
@@ -149,31 +198,51 @@ function Optima() {
               <div className="optima-control-icon">⌁</div>
               <div>
                 <span>ANÁLISIS DE TAREA</span>
-                <h3>Selecciona una tarea</h3>
+                <h3>Selecciona una tarea y el alcance</h3>
               </div>
             </div>
 
-            <div className="optima-select-wrapper">
-              <select
-                value={tareaSeleccionada ?? ""}
-                onChange={(evento) => {
-                  const idTarea = Number(evento.target.value);
-                  if (idTarea) {
-                    evaluarTarea(idTarea);
-                  } else {
-                    setTareaSeleccionada(null);
-                    setCandidatos([]);
-                  }
-                }}
-              >
-                <option value="">Selecciona una tarea para analizar</option>
-                {tareas.map((tarea) => (
-                  <option key={tarea.id_tarea} value={tarea.id_tarea}>
-                    {tarea.nombre}
-                  </option>
-                ))}
-              </select>
-              <span className="optima-select-arrow">⌄</span>
+            <div className="optima-filters-row">
+              <div className="optima-select-wrapper">
+                <select
+                  value={tareaSeleccionada ?? ""}
+                  onChange={(evento) => {
+                    const idTarea = Number(evento.target.value);
+                    if (idTarea) {
+                      evaluarTarea(idTarea, alcance);
+                    } else {
+                      setTareaSeleccionada(null);
+                      setCandidatos([]);
+                    }
+                  }}
+                >
+                  <option value="">Selecciona una tarea para analizar</option>
+                  {tareas.map((tarea) => (
+                    <option key={tarea.id_tarea} value={tarea.id_tarea}>
+                      {tarea.nombre}
+                    </option>
+                  ))}
+                </select>
+                <span className="optima-select-arrow">⌄</span>
+              </div>
+
+              <div className="optima-select-wrapper">
+                <select
+                  value={alcance}
+                  onChange={(e) => {
+                    const nuevo = e.target.value as AlcanceOptima;
+                    setAlcance(nuevo);
+                    if (tareaSeleccionada) {
+                      evaluarTarea(tareaSeleccionada, nuevo);
+                    }
+                  }}
+                >
+                  <option value="equipo">Alcance: equipo de la tarea</option>
+                  <option value="proyecto">Alcance: proyecto</option>
+                  <option value="organizacion">Alcance: organización</option>
+                </select>
+                <span className="optima-select-arrow">⌄</span>
+              </div>
             </div>
           </div>
 
@@ -182,10 +251,7 @@ function Optima() {
               <div className="optima-task-main">
                 <span className="optima-label">TAREA ANALIZADA</span>
                 <h3>{tareaActual.nombre}</h3>
-                <p>
-                  OPTIMA evaluó los integrantes activos del equipo responsable
-                  de esta tarea.
-                </p>
+                <p>OPTIMA evaluó {textoAlcance(alcance)}.</p>
               </div>
               <div className="optima-summary-metrics">
                 <div>
@@ -235,6 +301,8 @@ function Optima() {
                 } else {
                   setProyectoSeleccionado(null);
                   setPropuesta(null);
+                  setMsgConfirmacion("");
+                  setErrConfirmacion("");
                 }
               }}
             >
@@ -418,7 +486,7 @@ function Optima() {
                     <div>
                       <span>CARGA ACTUAL</span>
                       <strong>
-                        {candidato.horas_carga_actual?.toFixed(1) ?? "0.0"} h
+                        {candidato.horas_carga_actual?.toFixed(1) ?? "0.0"} %
                       </strong>
                     </div>
                     <div>
@@ -693,6 +761,30 @@ function Optima() {
                 </>
               )}
           </div>
+
+          <div className="optima-confirm-box">
+            <div>
+              <strong>Confirmar propuesta</strong>
+              <p>
+                Crea el equipo, agrega integrantes y asigna las tareas del
+                proyecto a las personas recomendadas por OPTIMA.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="optima-confirm-btn"
+              onClick={confirmarAsignacion}
+              disabled={confirmando}
+            >
+              {confirmando ? "Asignando..." : "Confirmar y asignar equipo"}
+            </button>
+            {msgConfirmacion && (
+              <p className="optima-confirm-ok">{msgConfirmacion}</p>
+            )}
+            {errConfirmacion && (
+              <p className="optima-confirm-err">{errConfirmacion}</p>
+            )}
+          </div>
         </div>
       )}
 
@@ -705,8 +797,8 @@ function Optima() {
             <div className="optima-empty-icon">✦</div>
             <h3>No fue posible generar el análisis</h3>
             <p>
-              Verifica que la tarea tenga habilidades requeridas y que su equipo
-              tenga integrantes activos.
+              Prueba otro alcance (proyecto u organización) o verifica
+              habilidades y personas activas.
             </p>
           </div>
         )}
@@ -718,8 +810,8 @@ function Optima() {
           </div>
           <h3>Listo para optimizar</h3>
           <p>
-            Selecciona una tarea y deja que OPTIMA encuentre las mejores
-            alternativas disponibles.
+            Selecciona una tarea y el alcance (equipo, proyecto u organización)
+            para el ranking.
           </p>
         </div>
       )}

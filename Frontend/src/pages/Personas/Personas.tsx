@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { obtenerPersonas } from "../../service/api";
+import {
+  obtenerPersonas,
+  obtenerOcupacionPersona,
+  type OcupacionPersona,
+} from "../../service/api";
 
 import type { Persona } from "../../types/persona";
 
@@ -9,6 +13,8 @@ import "./Personas.css";
 function Personas() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [seleccionada, setSeleccionada] = useState<Persona | null>(null);
+  const [ocupacion, setOcupacion] = useState<OcupacionPersona | null>(null);
+  const [cargandoOcupacion, setCargandoOcupacion] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,6 +36,42 @@ function Personas() {
     cargar();
   }, []);
 
+  useEffect(() => {
+    if (!seleccionada) {
+      setOcupacion(null);
+      return;
+    }
+
+    let cancelado = false;
+
+    const cargarOcupacion = async () => {
+      setCargandoOcupacion(true);
+      try {
+        const data = await obtenerOcupacionPersona(seleccionada.id_persona);
+        if (!cancelado) setOcupacion(data);
+      } catch {
+        if (!cancelado) {
+          setOcupacion({
+            id_persona: seleccionada.id_persona,
+            capacidad_horas_semana: Number(
+              seleccionada.capacidad_horas_semana ?? 0,
+            ),
+            ocupacion_pct: 0,
+            disponibilidad_pct: 100,
+          });
+        }
+      } finally {
+        if (!cancelado) setCargandoOcupacion(false);
+      }
+    };
+
+    cargarOcupacion();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [seleccionada]);
+
   if (cargando) {
     return <div className="per-msg">Cargando personas...</div>;
   }
@@ -38,14 +80,16 @@ function Personas() {
     return <div className="per-error">{error}</div>;
   }
 
-  // Carga semanal orientativa (0 hasta tener API de carga real)
-  const horasUsadas = 0;
-  const capacidad = Number(seleccionada?.capacidad_horas_semana ?? 0);
-  const horasLibres = Math.max(capacidad - horasUsadas, 0);
-  const pctUsado =
-    capacidad > 0
-      ? Math.min(100, Math.round((horasUsadas / capacidad) * 100))
-      : 0;
+  const capacidad = Number(
+    ocupacion?.capacidad_horas_semana ??
+      seleccionada?.capacidad_horas_semana ??
+      0,
+  );
+  const ocupacionPct = Number(ocupacion?.ocupacion_pct ?? 0);
+  const disponibilidadPct = Number(
+    ocupacion?.disponibilidad_pct ?? Math.max(0, 100 - ocupacionPct),
+  );
+  const pctBarra = Math.min(100, Math.round(ocupacionPct));
 
   return (
     <section className="per-page">
@@ -64,7 +108,6 @@ function Personas() {
       </div>
 
       <div className="per-layout">
-        {/* LISTA */}
         <div className="per-grid">
           {personas.length === 0 ? (
             <p className="per-msg">No hay personas registradas.</p>
@@ -111,7 +154,6 @@ function Personas() {
           )}
         </div>
 
-        {/* DETALLE */}
         <aside className="per-detail">
           {!seleccionada ? (
             <div className="per-detail-empty">
@@ -160,20 +202,37 @@ function Personas() {
 
               <div className="per-detail-block">
                 <h3>Carga semanal</h3>
-                <div className="per-hours-head">
-                  <span>
-                    {horasUsadas} h usadas · {horasLibres} h libres
-                  </span>
-                  <strong>{pctUsado}%</strong>
-                </div>
-                <div className="per-hours-bar">
-                  <span style={{ width: `${pctUsado}%` }} />
-                </div>
-                <p className="per-hours-note">
-                  Capacidad: {capacidad} h/semana.
-                  {horasUsadas === 0 &&
-                    " La carga real se conectará con las asignaciones activas."}
-                </p>
+                {cargandoOcupacion ? (
+                  <p className="per-hours-note">Calculando ocupación...</p>
+                ) : (
+                  <>
+                    <div className="per-hours-head">
+                      <span>
+                        Ocupación {ocupacionPct.toFixed(0)}% · Libre{" "}
+                        {disponibilidadPct.toFixed(0)}%
+                      </span>
+                      <strong>{pctBarra}%</strong>
+                    </div>
+                    <div className="per-hours-bar">
+                      <span
+                        style={{
+                          width: `${pctBarra}%`,
+                          background:
+                            pctBarra >= 100
+                              ? "#dc2626"
+                              : pctBarra >= 70
+                                ? "#f59e0b"
+                                : "#16a34a",
+                        }}
+                      />
+                    </div>
+                    <p className="per-hours-note">
+                      Capacidad: {capacidad} h/semana. La ocupación suma el % de
+                      dedicación de tareas ASIGNADA / EN_PROGRESO (misma lógica
+                      que OPTIMA).
+                    </p>
+                  </>
+                )}
               </div>
             </>
           )}

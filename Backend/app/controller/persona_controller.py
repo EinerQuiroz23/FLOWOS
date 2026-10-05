@@ -16,6 +16,10 @@ from app.schemas.persona_schema import (
 
 from app.services.persona_service import PersonaService
 
+from sqlalchemy import func, select
+from app.models.equipo_persona_model import EquipoPersona
+from app.models.asignacion_tarea_model import AsignacionTarea
+from app.models.persona_model import Persona
 
 router = APIRouter(
     prefix="/personas",
@@ -81,7 +85,52 @@ def obtener_mi_persona(
 
     return persona
 
+@router.get("/{id_persona}/ocupacion")
+def obtener_ocupacion(
+    id_persona: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role("ADMIN", "LIDER_PROYECTO", "SECRETARIO", "EMPLEADO")
+    ),
+):
+    persona = (
+        db.query(Persona)
+        .filter(
+            Persona.id_persona == id_persona,
+            Persona.id_organizacion == usuario.id_organizacion,
+        )
+        .first()
+    )
+    if persona is None:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
 
+    consulta = (
+        select(
+            func.coalesce(func.sum(AsignacionTarea.dedicacion), 0).label(
+                "ocupacion"
+            )
+        )
+        .select_from(EquipoPersona)
+        .join(
+            AsignacionTarea,
+            AsignacionTarea.id_equipo_persona
+            == EquipoPersona.id_equipo_persona,
+        )
+        .where(
+            EquipoPersona.id_persona == id_persona,
+            AsignacionTarea.estado.in_(["ASIGNADA", "EN_PROGRESO"]),
+        )
+    )
+    ocupacion = float(db.execute(consulta).scalar() or 0)
+    capacidad = float(persona.capacidad_horas_semana or 0)
+    disponibilidad = max(0.0, 100.0 - ocupacion)
+
+    return {
+        "id_persona": id_persona,
+        "capacidad_horas_semana": capacidad,
+        "ocupacion_pct": round(ocupacion, 2),
+        "disponibilidad_pct": round(disponibilidad, 2),
+    }
 # ==========================================================
 # OBTENER PERSONA POR ID
 # ==========================================================

@@ -1124,3 +1124,73 @@
 .optima-team-insights li {
   margin-bottom: 6px;
 }
+
+.optima-confirm-box {
+  margin-top: 28px;
+  padding: 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5f0ff, #ffffff);
+  border: 1px solid #c4b5fd;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optima-confirm-box strong {
+  display: block;
+  color: #5b21b6;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.optima-confirm-box p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.optima-confirm-btn {
+  align-self: flex-start;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(109, 40, 217, 0.3);
+}
+
+.optima-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.optima-confirm-ok {
+  margin: 0;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.optima-confirm-err {
+  margin: 0;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.optima-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.optima-filters-row .optima-select-wrapper {
+  flex: 1;
+  min-width: 220px;
+}
