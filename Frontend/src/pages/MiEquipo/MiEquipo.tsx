@@ -16,6 +16,7 @@ import {
   type EquipoPersonaItem,
   type MensajeEquipo,
 } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
 import type { Equipo } from "../../types/equipo";
 import type { Proyecto } from "../../types/proyecto";
 import type { Persona } from "../../types/persona";
@@ -36,7 +37,18 @@ interface EquipoDetalle {
   }[];
 }
 
+function inicialNombre(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/);
+  if (partes.length >= 2) {
+    return (partes[0][0] + partes[1][0]).toUpperCase();
+  }
+  return (nombre[0] || "?").toUpperCase();
+}
+
 function MiEquipo() {
+  const { usuario } = useAuth();
+  const miIdPersona = usuario?.id_persona ?? null;
+
   const [equipos, setEquipos] = useState<EquipoDetalle[]>([]);
   const [seleccionado, setSeleccionado] = useState<EquipoDetalle | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -146,7 +158,6 @@ function MiEquipo() {
     }
     cargarMensajes(seleccionado.id_equipo);
 
-    // Refresco cada 5 s (chat casi en tiempo real sin WebSocket)
     const id = window.setInterval(() => {
       cargarMensajes(seleccionado.id_equipo);
     }, 5000);
@@ -253,7 +264,6 @@ function MiEquipo() {
                 </ul>
               )}
 
-              {/* CHAT */}
               <div className="mi-eq-chat">
                 <div className="mi-eq-chat-header">
                   <strong>Chat del equipo</strong>
@@ -268,17 +278,58 @@ function MiEquipo() {
                       Aún no hay mensajes. Escribe el primero.
                     </p>
                   ) : (
-                    mensajes.map((m) => (
-                      <div key={m.id_mensaje} className="mi-eq-msg-bubble">
-                        <div className="mi-eq-msg-meta">
-                          <strong>{m.nombre_persona}</strong>
-                          <span>
-                            {new Date(m.fecha_creacion).toLocaleString()}
-                          </span>
+                    mensajes.map((m) => {
+                      const esMio =
+                        miIdPersona != null &&
+                        Number(m.id_persona) === Number(miIdPersona);
+
+                      return (
+                        <div
+                          key={m.id_mensaje}
+                          className={
+                            esMio ? "mi-eq-msg-row mio" : "mi-eq-msg-row otro"
+                          }
+                        >
+                          {!esMio && (
+                            <div
+                              className="mi-eq-msg-avatar"
+                              title={m.nombre_persona}
+                            >
+                              {inicialNombre(m.nombre_persona)}
+                            </div>
+                          )}
+
+                          <div
+                            className={
+                              esMio
+                                ? "mi-eq-msg-bubble mio"
+                                : "mi-eq-msg-bubble otro"
+                            }
+                          >
+                            {!esMio && (
+                              <div className="mi-eq-msg-name">
+                                {m.nombre_persona}
+                              </div>
+                            )}
+                            <p>{m.contenido}</p>
+                            <span className="mi-eq-msg-time">
+                              {new Date(m.fecha_creacion).toLocaleTimeString(
+                                [],
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </span>
+                          </div>
+
+                          {esMio && (
+                            <div className="mi-eq-msg-avatar mio" title="Tú">
+                              {usuario?.nombre_usuario
+                                ? usuario.nombre_usuario.charAt(0).toUpperCase()
+                                : "T"}
+                            </div>
+                          )}
                         </div>
-                        <p>{m.contenido}</p>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   <div ref={chatEndRef} />
                 </div>

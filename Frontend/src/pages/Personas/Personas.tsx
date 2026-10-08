@@ -1,14 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import {
   obtenerPersonas,
   obtenerOcupacionPersona,
+  crearPersona,
   type OcupacionPersona,
+  type PersonaCreate,
 } from "../../service/api";
 
 import type { Persona } from "../../types/persona";
 
 import "./Personas.css";
+
+const formVacio: PersonaCreate = {
+  nombre: "",
+  apellido: "",
+  email: "",
+  telefono: "",
+  capacidad_horas_semana: 40,
+};
 
 function Personas() {
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -18,22 +28,28 @@ function Personas() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [form, setForm] = useState<PersonaCreate>(formVacio);
+  const [guardando, setGuardando] = useState(false);
+  const [errorForm, setErrorForm] = useState("");
+
+  const cargarPersonas = async () => {
+    setCargando(true);
+    setError("");
+    try {
+      const datos = await obtenerPersonas();
+      setPersonas(datos);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudieron cargar personas",
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
-    const cargar = async () => {
-      setCargando(true);
-      setError("");
-      try {
-        const datos = await obtenerPersonas();
-        setPersonas(datos);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "No se pudieron cargar personas",
-        );
-      } finally {
-        setCargando(false);
-      }
-    };
-    cargar();
+    cargarPersonas();
   }, []);
 
   useEffect(() => {
@@ -72,6 +88,46 @@ function Personas() {
     };
   }, [seleccionada]);
 
+  const abrirForm = () => {
+    setForm(formVacio);
+    setErrorForm("");
+    setMostrarForm(true);
+  };
+
+  const cerrarForm = () => {
+    if (guardando) return;
+    setMostrarForm(false);
+    setErrorForm("");
+  };
+
+  const manejarSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErrorForm("");
+    setGuardando(true);
+
+    try {
+      const payload: PersonaCreate = {
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        email: form.email.trim(),
+        telefono: form.telefono?.trim() || null,
+        capacidad_horas_semana: Number(form.capacidad_horas_semana),
+      };
+
+      const nueva = await crearPersona(payload);
+      setPersonas((prev) => [...prev, nueva]);
+      setSeleccionada(nueva);
+      setMostrarForm(false);
+      setForm(formVacio);
+    } catch (err) {
+      setErrorForm(
+        err instanceof Error ? err.message : "No se pudo crear la persona",
+      );
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   if (cargando) {
     return <div className="per-msg">Cargando personas...</div>;
   }
@@ -101,16 +157,23 @@ function Personas() {
             Consulta el equipo de la organización y el detalle de cada perfil.
           </p>
         </div>
-        <div className="per-hero-stat">
-          <strong>{personas.length}</strong>
-          <span>registradas</span>
+        <div className="per-hero-actions">
+          <div className="per-hero-stat">
+            <strong>{personas.length}</strong>
+            <span>registradas</span>
+          </div>
+          <button type="button" className="per-btn-primary" onClick={abrirForm}>
+            + Nueva persona
+          </button>
         </div>
       </div>
 
       <div className="per-layout">
         <div className="per-grid">
           {personas.length === 0 ? (
-            <p className="per-msg">No hay personas registradas.</p>
+            <p className="per-msg">
+              No hay personas. Crea la primera con “Nueva persona”.
+            </p>
           ) : (
             personas.map((persona) => {
               const activa = seleccionada?.id_persona === persona.id_persona;
@@ -238,6 +301,105 @@ function Personas() {
           )}
         </aside>
       </div>
+
+      {/* MODAL NUEVA PERSONA */}
+      {mostrarForm && (
+        <div className="per-modal-overlay" onClick={cerrarForm}>
+          <div
+            className="per-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="per-modal-head">
+              <h3>Nueva persona</h3>
+              <button type="button" onClick={cerrarForm} disabled={guardando}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={manejarSubmit} className="per-form">
+              <label>
+                Nombre
+                <input
+                  required
+                  value={form.nombre}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, nombre: e.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Apellido
+                <input
+                  required
+                  value={form.apellido}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, apellido: e.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Teléfono
+                <input
+                  value={form.telefono ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, telefono: e.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Capacidad (h/semana)
+                <input
+                  type="number"
+                  min={1}
+                  max={168}
+                  step={0.5}
+                  required
+                  value={form.capacidad_horas_semana}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      capacidad_horas_semana: Number(e.target.value),
+                    }))
+                  }
+                />
+              </label>
+
+              {errorForm && <p className="per-form-error">{errorForm}</p>}
+
+              <div className="per-form-actions">
+                <button
+                  type="button"
+                  className="per-btn-secondary"
+                  onClick={cerrarForm}
+                  disabled={guardando}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="per-btn-primary"
+                  disabled={guardando}
+                >
+                  {guardando ? "Guardando..." : "Crear persona"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

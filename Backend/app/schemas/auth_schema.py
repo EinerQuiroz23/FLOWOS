@@ -123,3 +123,14 @@ class CrearAdminOrganizacionRequest(BaseModel):
     telefono: str | None = Field(default=None, max_length=30)
     capacidad_horas_semana: float = Field(default=40, gt=0, le=168)
     contrasena: str = Field(min_length=8, max_length=128)
+
+
+
+class PromoverAdminRequest(BaseModel):
+    id_persona: int = Field(gt=0)
+    # Solo obligatorio si la persona aún no tiene usuario
+    contrasena: str | None = Field(
+        default=None,
+        min_length=8,
+        max_length=128,
+    )

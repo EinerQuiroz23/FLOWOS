@@ -9,10 +9,10 @@ from app.services.organizacion_service import OrganizacionService
 
 from app.core.authorization import require_role
 
-from app.schemas.auth_schema import CrearAdminOrganizacionRequest
+from app.schemas.auth_schema import CrearAdminOrganizacionRequest , PromoverAdminRequest
 from app.services.auth_service import AuthService
 
-
+from app.repositories.organizacion_repository import OrganizacionRepository
 
 router = APIRouter(
     prefix="/organizaciones",
@@ -184,3 +184,57 @@ def activar_organizacion(
     except ValueError as error:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(error))
+    
+
+
+
+@router.post(
+    "/{id_organizacion}/admin/promover",
+    status_code=200,
+)
+def promover_admin_organizacion(
+    id_organizacion: int,
+    datos: PromoverAdminRequest,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_role("SUPER_ADMIN")),
+):
+    try:
+        return AuthService.promover_admin_organizacion(
+            db,
+            id_organizacion,
+            datos.id_persona,
+            datos.contrasena,
+        )
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(error))  
+
+
+
+@router.get("/{id_organizacion}/personas")
+def listar_personas_organizacion(
+    id_organizacion: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(require_role("SUPER_ADMIN")),
+):
+    from app.repositories.persona_repository import PersonaRepository
+
+    org = OrganizacionRepository.obtener_por_id(db, id_organizacion)
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organización no encontrada")
+
+    repo = PersonaRepository(db)
+    # Ajusta el nombre del método a como esté en tu repo:
+    personas = repo.obtener_por_organizacion(id_organizacion)
+    # o: repo.obtener_todos filtrado, etc.
+
+    return [
+        {
+            "id_persona": p.id_persona,
+            "nombre": p.nombre,
+            "apellido": p.apellido,
+            "email": p.email,
+            "estado": p.estado,
+        }
+        for p in personas
+    ]

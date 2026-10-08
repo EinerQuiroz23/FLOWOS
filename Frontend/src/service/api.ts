@@ -441,3 +441,89 @@ export async function enviarMensajeEquipo(
   });
   return procesarRespuesta<MensajeEquipo>(respuesta);
 }
+
+export interface OrganizacionItem {
+  id_organizacion: number;
+  nombre: string;
+  descripcion?: string | null;
+  estado: boolean;
+  fecha_creacion?: string;
+  codigo_organizacion?: string | null;
+}
+
+export async function listarOrganizaciones(): Promise<OrganizacionItem[]> {
+  const respuesta = await fetch(`${API_URL}/organizaciones`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<OrganizacionItem[]>(respuesta);
+}
+
+export interface PersonaCreate {
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string | null;
+  capacidad_horas_semana: number;
+}
+
+export async function crearPersona(datos: PersonaCreate): Promise<Persona> {
+  const respuesta = await fetch(`${API_URL}/personas/`, {
+    method: "POST",
+    headers: obtenerHeaders(),
+    body: JSON.stringify(datos),
+  });
+  return procesarRespuesta<Persona>(respuesta);
+}
+
+export interface ProyectoCreate {
+  nombre: string;
+  descripcion?: string | null;
+  fecha_inicio: string; // "YYYY-MM-DD"
+  fecha_limite: string;
+}
+
+export async function crearProyecto(datos: ProyectoCreate): Promise<Proyecto> {
+  const respuesta = await fetch(`${API_URL}/proyectos/`, {
+    method: "POST",
+    headers: obtenerHeaders(),
+    body: JSON.stringify(datos),
+  });
+  return procesarRespuesta<Proyecto>(respuesta);
+}
+
+export async function listarPersonasOrganizacion(
+  idOrganizacion: number,
+): Promise<
+  {
+    id_persona: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    estado: boolean;
+  }[]
+> {
+  const respuesta = await fetch(
+    `${API_URL}/organizaciones/${idOrganizacion}/personas`,
+    { headers: obtenerHeaders() },
+  );
+  return procesarRespuesta(respuesta);
+}
+
+export async function promoverAdminOrganizacion(
+  idOrganizacion: number,
+  idPersona: number,
+  contrasena?: string,
+) {
+  const respuesta = await fetch(
+    `${API_URL}/organizaciones/${idOrganizacion}/admin/promover`,
+    {
+      method: "POST",
+      headers: obtenerHeaders(),
+      body: JSON.stringify({
+        id_persona: idPersona,
+        contrasena: contrasena || null,
+      }),
+    },
+  );
+  return procesarRespuesta(respuesta);
+}

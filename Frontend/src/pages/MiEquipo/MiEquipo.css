@@ -144,7 +144,7 @@
   border: 1px solid #2a3444;
   border-radius: 14px;
   overflow: hidden;
-  background: #0f1419;
+  background: #0b0f14;
 }
 
 .mi-eq-chat-header {
@@ -167,42 +167,94 @@
 }
 
 .mi-eq-chat-messages {
-  height: 280px;
+  height: 320px;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(220, 38, 38, 0.06), transparent 40%),
+    #0b0f14;
+}
+
+.mi-eq-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.mi-eq-msg-row.mio {
+  justify-content: flex-end;
+}
+
+.mi-eq-msg-row.otro {
+  justify-content: flex-start;
+}
+
+.mi-eq-msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2a3444;
+  color: #e8eef6;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mi-eq-msg-avatar.mio {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
 }
 
 .mi-eq-msg-bubble {
-  background: #151b24;
+  max-width: min(75%, 420px);
+  padding: 8px 12px 6px;
+  border-radius: 12px;
+  position: relative;
+}
+
+.mi-eq-msg-bubble.otro {
+  background: #1a222d;
   border: 1px solid #2a3444;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-bottom-left-radius: 4px;
 }
 
-.mi-eq-msg-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+.mi-eq-msg-bubble.mio {
+  background: linear-gradient(135deg, #c53030, #9b1c1c);
+  border-bottom-right-radius: 4px;
+  color: #fff;
+}
+
+.mi-eq-msg-name {
   font-size: 12px;
-}
-
-.mi-eq-msg-meta strong {
+  font-weight: 700;
   color: #e85a64;
-}
-
-.mi-eq-msg-meta span {
-  color: #8b9cb3;
+  margin-bottom: 2px;
 }
 
 .mi-eq-msg-bubble p {
   margin: 0;
-  color: #e8eef6;
   font-size: 14px;
   line-height: 1.4;
+  color: inherit;
+  word-break: break-word;
+}
+
+.mi-eq-msg-bubble.otro p {
+  color: #e8eef6;
+}
+
+.mi-eq-msg-time {
+  display: block;
+  text-align: right;
+  font-size: 10px;
+  margin-top: 4px;
+  opacity: 0.7;
 }
 
 .mi-eq-chat-form {
