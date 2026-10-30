@@ -21,6 +21,23 @@ import type { Persona } from "../../types/persona";
 import type { Equipo } from "../../types/equipo";
 import type { Proyecto } from "../../types/proyecto";
 import "./MiPanel.css";
+import { blobFotoPersona } from "../../service/api";
+
+function esLider(rol?: string | null): boolean {
+  const texto = (rol || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+  return texto.includes("LIDER");
+}
+
+function rolDe(relacion: EquipoPersonaItem): string {
+  const item = relacion as EquipoPersonaItem & {
+    rol_equipo?: string | null;
+    rol?: string | null;
+  };
+  return item.rol_equipo || item.rol || "";
+}
 
 function MiPanel() {
   const { usuario } = useAuth();
@@ -34,6 +51,7 @@ function MiPanel() {
   const [catalogoNiveles, setCatalogoNiveles] = useState<NivelHabilidad[]>([]);
   const [numEquipos, setNumEquipos] = useState(0);
   const [numProyectos, setNumProyectos] = useState(0);
+  const [soyLider, setSoyLider] = useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -42,23 +60,37 @@ function MiPanel() {
   const [msgNombre, setMsgNombre] = useState("");
   const [errNombre, setErrNombre] = useState("");
   const [guardandoNombre, setGuardandoNombre] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState("");
+
+  useEffect(() => {
+    if (!usuario?.id_persona) return;
+    let objectUrl = "";
+    blobFotoPersona(usuario.id_persona)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setFotoUrl(objectUrl);
+      })
+      .catch(() => setFotoUrl(""));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [usuario?.id_persona]);
 
   useEffect(() => {
     const cargar = async () => {
       setCargando(true);
       setError("");
       try {
-        const [p, t, mias, habs, niveles, rels, equipos, proyectos] =
-          await Promise.all([
-            obtenerMiPersona(),
-            obtenerMisTareas(),
-            obtenerMisHabilidades(),
-            obtenerHabilidades(),
-            obtenerNivelesHabilidad(),
-            obtenerMisEquiposPersona(),
-            obtenerEquipos(),
-            obtenerProyectos(),
-          ]);
+        const [p, t, mias, habs, niveles, rels, equipos] = await Promise.all([
+          obtenerMiPersona(),
+          obtenerMisTareas(),
+          obtenerMisHabilidades(),
+          obtenerHabilidades(),
+          obtenerNivelesHabilidad(),
+          obtenerMisEquiposPersona(),
+          obtenerEquipos(),
+          obtenerProyectos(),
+        ]);
 
         setPersona(p);
         setTareas(t);
@@ -71,6 +103,7 @@ function MiPanel() {
 
         const activos = rels.filter((r: EquipoPersonaItem) => !r.fecha_fin);
         setNumEquipos(activos.length);
+        setSoyLider(activos.some((r) => esLider(rolDe(r))));
 
         const idsProy = new Set<number>();
         activos.forEach((r) => {
@@ -135,26 +168,30 @@ function MiPanel() {
 
   return (
     <div className="mi-panel">
-      {/* HERO PERFIL */}
       <section className="mi-card mi-perfil mi-perfil-hero">
         <div className="mi-avatar">
-          {(persona?.nombre || "U").charAt(0).toUpperCase()}
+          {fotoUrl ? (
+            <img src={fotoUrl} alt="Foto de perfil" />
+          ) : (
+            (persona?.nombre || "U").charAt(0).toUpperCase()
+          )}
         </div>
         <div className="mi-perfil-text">
           <span className="mi-eyebrow">TU ESPACIO EN FLOWOS</span>
           <h2>
             {persona?.nombre} {persona?.apellido}
+            {soyLider && <span className="mi-lider">Líder</span>}
           </h2>
           <p>{persona?.email}</p>
           {persona?.telefono && <p>Tel: {persona.telefono}</p>}
           <p className="mi-meta">
             @{usuario?.nombre_usuario ?? "—"} ·{" "}
             {persona?.capacidad_horas_semana ?? "—"} h/semana disponibles
+            {soyLider ? " · Líder de equipo" : ""}
           </p>
         </div>
       </section>
 
-      {/* STATS */}
       <div className="mi-stats">
         <div className="mi-stat">
           <strong>{tareas.length}</strong>
@@ -179,7 +216,6 @@ function MiPanel() {
       </div>
 
       <div className="mi-panel-grid">
-        {/* NOMBRE */}
         <section className="mi-card">
           <h3>Nombre de perfil</h3>
           <p className="mi-empty">Así te ven en FlowOS (no es tu correo).</p>
@@ -200,7 +236,6 @@ function MiPanel() {
           {errNombre && <div className="mi-panel-error">{errNombre}</div>}
         </section>
 
-        {/* HABILIDADES solo lectura */}
         <section className="mi-card">
           <div className="mi-card-head">
             <h3>Mis habilidades</h3>
@@ -236,7 +271,6 @@ function MiPanel() {
         </section>
       </div>
 
-      {/* ACCESOS RÁPIDOS */}
       <section className="mi-card">
         <h3>Accesos rápidos</h3>
         <div className="mi-quick">
@@ -250,7 +284,7 @@ function MiPanel() {
           </Link>
           <Link to="/mi-equipo" className="mi-quick-item">
             <span>Mi equipo</span>
-            <small>{numEquipos} equipos</small>
+            <small>{soyLider ? "Líder" : `${numEquipos} equipos`}</small>
           </Link>
           <Link to="/mis-habilidades" className="mi-quick-item">
             <span>Habilidades</span>

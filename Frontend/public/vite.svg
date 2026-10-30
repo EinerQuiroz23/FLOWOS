@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <filter id="luz" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#020617" flood-opacity="0.65"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="2.2" flood-color="#7DD3FC" flood-opacity="0.9"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#061428"/>
+  <text x="32" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-size="40" font-weight="700" fill="#7DD3FC" filter="url(#luz)">F</text>
+</svg>

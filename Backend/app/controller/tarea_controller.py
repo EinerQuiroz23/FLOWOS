@@ -1,6 +1,9 @@
-from typing import List
+from typing import List 
+from sqlalchemy import text 
 
-from fastapi import APIRouter, Depends
+
+
+from fastapi import APIRouter, Depends , HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -217,3 +220,78 @@ def cambiar_estado(
 
 
 
+@router.put("/{id_tarea}")
+def actualizar_tarea(
+    id_tarea: int,
+    datos: dict,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role("ADMIN", "SECRETARIO")
+    ),
+):
+    permitidos = {
+        "nombre",
+        "descripcion",
+        "prioridad",
+        "horas_estimadas",
+        "fecha_inicio",
+        "fecha_limite",
+        "estado",
+    }
+    cambios = {k: v for k, v in datos.items() if k in permitidos}
+    if not cambios:
+        raise HTTPException(status_code=400, detail="Nada para actualizar")
+
+    sets = ", ".join(f"{campo} = :{campo}" for campo in cambios)
+    fila = db.execute(
+        text(
+            f"""
+            UPDATE tarea AS t
+            SET {sets}
+            FROM proyecto AS p
+            WHERE t.id_tarea = :id
+              AND p.id_proyecto = t.id_proyecto
+              AND p.id_organizacion = :org
+            RETURNING t.id_tarea, t.nombre, t.descripcion, t.prioridad,
+                      t.horas_estimadas, t.fecha_inicio, t.fecha_limite,
+                      t.estado, t.id_proyecto, t.id_equipo
+            """
+        ),
+        {**cambios, "id": id_tarea, "org": usuario.id_organizacion},
+    ).mappings().first()
+
+    if not fila:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="La tarea no existe")
+
+    db.commit()
+    return dict(fila)
+
+
+@router.delete("/{id_tarea}", status_code=204)
+def eliminar_tarea(
+    id_tarea: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role("ADMIN", "SECRETARIO")
+    ),
+):
+    fila = db.execute(
+        text(
+            """
+            DELETE FROM tarea AS t
+            USING proyecto AS p
+            WHERE t.id_tarea = :id
+              AND p.id_proyecto = t.id_proyecto
+              AND p.id_organizacion = :org
+            RETURNING t.id_tarea
+            """
+        ),
+        {"id": id_tarea, "org": usuario.id_organizacion},
+    ).first()
+
+    if not fila:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="La tarea no existe")
+
+    db.commit()

@@ -1,243 +1,450 @@
 import { useEffect, useState } from "react";
 
 import {
-  obtenerEquipos,
   obtenerProyectos,
+  obtenerEquipos,
+  obtenerTareas,
   obtenerPersonas,
-  obtenerPersonasPorEquipo,
-  type EquipoPersonaItem,
 } from "../../service/api";
+import { useAuth } from "../../context/AuthContext";
+import { ROLES } from "../../utils/roles";
 
-import type { Equipo } from "../../types/equipo";
 import type { Proyecto } from "../../types/proyecto";
+import type { Equipo } from "../../types/equipo";
+import type { Tarea } from "../../types/tarea";
 import type { Persona } from "../../types/persona";
 
 import "./Equipos.css";
 
-interface IntegranteVista {
-  id_persona: number;
+type TareaNueva = {
   nombre: string;
-  email: string;
+  prioridad: string;
+  horas: string;
+  inicio: string;
+  limite: string;
+};
+
+type Miembro = {
+  id_equipo_persona: number;
+  id_persona: number;
   rol_equipo: string;
   dedicacion: number;
-  esLider: boolean;
+  fecha_fin?: string | null;
+};
+
+const API = "http://127.0.0.1:8000";
+
+const filaVacia = (): TareaNueva => ({
+  nombre: "",
+  prioridad: "MEDIA",
+  horas: "8",
+  inicio: "",
+  limite: "",
+});
+
+async function api<T>(ruta: string, opciones?: RequestInit): Promise<T> {
+  const token = localStorage.getItem("flowos_token");
+  const respuesta = await fetch(`${API}${ruta}`, {
+    ...opciones,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!respuesta.ok) {
+    const error = await respuesta.json().catch(() => null);
+    const detalle = error?.detail;
+    throw new Error(
+      typeof detalle === "string" ? detalle : "No se pudo guardar el equipo",
+    );
+  }
+  return respuesta.json();
 }
 
 function Equipos() {
-  const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const { usuario } = useAuth();
+  const puedeCrear =
+    usuario?.id_rol === ROLES.ADMIN ||
+    usuario?.id_rol === ROLES.SECRETARIO ||
+    usuario?.id_rol === ROLES.LIDER_PROYECTO;
+
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [equipos, setEquipos] = useState<Equipo[]>([]);
+  const [tareas, setTareas] = useState<Tarea[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [seleccionado, setSeleccionado] = useState<Equipo | null>(null);
-  const [integrantes, setIntegrantes] = useState<IntegranteVista[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [idProyecto, setIdProyecto] = useState<number | null>(null);
+  const [elegido, setElegido] = useState<number | null>(null);
+  const [miembros, setMiembros] = useState<Miembro[]>([]);
+  const [abierto, setAbierto] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [filas, setFilas] = useState<TareaNueva[]>([filaVacia()]);
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+  const [aviso, setAviso] = useState("");
+
+  const cargar = async () => {
+    const [proyectosData, equiposData, tareasData, personasData] =
+      await Promise.all([
+        obtenerProyectos(),
+        obtenerEquipos(),
+        obtenerTareas(),
+        obtenerPersonas(),
+      ]);
+    setProyectos(proyectosData);
+    setEquipos(equiposData);
+    setTareas(tareasData);
+    setPersonas(personasData);
+    setIdProyecto((actual) => actual ?? proyectosData[0]?.id_proyecto ?? null);
+  };
 
   useEffect(() => {
-    const cargar = async () => {
-      setCargando(true);
-      setError("");
-      try {
-        const [eqs, proys, pers] = await Promise.all([
-          obtenerEquipos(),
-          obtenerProyectos(),
-          obtenerPersonas(),
-        ]);
-        setEquipos(eqs);
-        setProyectos(proys);
-        setPersonas(pers);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "No se pudieron cargar equipos",
-        );
-      } finally {
-        setCargando(false);
-      }
-    };
-    cargar();
+    cargar().catch((err) =>
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No se pudieron cargar los equipos",
+      ),
+    );
   }, []);
 
-  const nombreProyecto = (id: number) =>
-    proyectos.find((p) => p.id_proyecto === id)?.nombre ?? `Proyecto #${id}`;
+  useEffect(() => {
+    if (!elegido) {
+      setMiembros([]);
+      return;
+    }
+    api<Miembro[]>(`/equipos-personas/equipo/${elegido}`)
+      .then((data) => setMiembros(data.filter((item) => !item.fecha_fin)))
+      .catch(() => setMiembros([]));
+  }, [elegido]);
 
-  const abrirDetalle = async (equipo: Equipo) => {
-    setSeleccionado(equipo);
-    setCargandoDetalle(true);
-    setIntegrantes([]);
+  const proyectoActual =
+    proyectos.find((proyecto) => proyecto.id_proyecto === idProyecto) || null;
 
+  const equiposDelProyecto = equipos.filter(
+    (equipo) => equipo.id_proyecto === idProyecto,
+  );
+
+  const nombrePersona = (id: number) => {
+    const persona = personas.find((item) => item.id_persona === id);
+    return persona ? `${persona.nombre} ${persona.apellido}` : `Persona #${id}`;
+  };
+
+  const abrirForm = () => {
+    if (!idProyecto) return;
+    setNombre("");
+    setDescripcion("");
+    setFilas([filaVacia()]);
+    setError("");
+    setAbierto(true);
+  };
+
+  const crear = async () => {
+    if (!idProyecto || !nombre.trim()) return;
+    const utiles = filas.filter(
+      (fila) => fila.nombre.trim() && fila.inicio && fila.limite,
+    );
     try {
-      const rels = await obtenerPersonasPorEquipo(equipo.id_equipo);
-      const mapa = new Map(personas.map((p) => [p.id_persona, p]));
-
-      const vista: IntegranteVista[] = rels
-        .filter((r: EquipoPersonaItem) => !r.fecha_fin)
-        .map((r) => {
-          const p = mapa.get(r.id_persona);
-          const rol = (r.rol_equipo || "").toUpperCase();
-          const esLider =
-            rol.includes("LIDER") ||
-            rol.includes("LÍDER") ||
-            rol.includes("LEADER");
-
-          return {
-            id_persona: r.id_persona,
-            nombre: p
-              ? `${p.nombre} ${p.apellido}`
-              : `Persona #${r.id_persona}`,
-            email: p?.email ?? "—",
-            rol_equipo: r.rol_equipo,
-            dedicacion: Number(r.dedicacion),
-            esLider,
-          };
+      setGuardando(true);
+      setError("");
+      const equipo = await api<Equipo>("/equipos/", {
+        method: "POST",
+        body: JSON.stringify({
+          id_proyecto: idProyecto,
+          nombre: nombre.trim(),
+          descripcion: descripcion.trim() || null,
+        }),
+      });
+      for (const fila of utiles) {
+        await api("/tareas/", {
+          method: "POST",
+          body: JSON.stringify({
+            id_proyecto: idProyecto,
+            id_equipo: equipo.id_equipo,
+            nombre: fila.nombre.trim(),
+            descripcion: null,
+            prioridad: fila.prioridad,
+            horas_estimadas: Number(fila.horas) || 8,
+            fecha_inicio: fila.inicio,
+            fecha_limite: fila.limite,
+          }),
         });
-
-      // Líderes primero
-      vista.sort((a, b) => Number(b.esLider) - Number(a.esLider));
-      setIntegrantes(vista);
+      }
+      await cargar();
+      setElegido(equipo.id_equipo);
+      setAbierto(false);
+      setAviso(
+        `Equipo "${equipo.nombre}" creado en ${proyectoActual?.nombre || "el proyecto"} con ${utiles.length} tarea(s).`,
+      );
     } catch (err) {
-      console.error(err);
+      setError(
+        err instanceof Error ? err.message : "No se pudo crear el equipo",
+      );
     } finally {
-      setCargandoDetalle(false);
+      setGuardando(false);
     }
   };
 
-  if (cargando) {
-    return <div className="eq-msg">Cargando equipos...</div>;
-  }
-
-  if (error) {
-    return <div className="eq-error">{error}</div>;
-  }
-
-  const lider = integrantes.find((i) => i.esLider) ?? null;
+  const equipoActual =
+    equiposDelProyecto.find((equipo) => equipo.id_equipo === elegido) || null;
+  const tareasDelEquipo = tareas.filter((tarea) => tarea.id_equipo === elegido);
 
   return (
     <section className="eq-page">
-      <div className="eq-hero">
+      <header className="eq-head">
         <div>
-          <span className="eq-eyebrow">COLABORACIÓN</span>
-          <h2>Equipos</h2>
-          <p>
-            Revisa los equipos, su proyecto y los integrantes de cada grupo.
-          </p>
+          <span>EQUIPOS</span>
+          <h1>Equipos del proyecto</h1>
+          <p>Elige el proyecto y ahí creas sus equipos.</p>
         </div>
-        <div className="eq-hero-stat">
-          <strong>{equipos.length}</strong>
-          <span>registrados</span>
-        </div>
+      </header>
+
+      <div className="eq-toolbar">
+        <label>
+          Proyecto
+          <select
+            value={idProyecto ?? ""}
+            onChange={(e) => {
+              setIdProyecto(e.target.value ? Number(e.target.value) : null);
+              setElegido(null);
+              setAviso("");
+            }}
+          >
+            <option value="">Selecciona un proyecto</option>
+            {proyectos.map((proyecto) => (
+              <option key={proyecto.id_proyecto} value={proyecto.id_proyecto}>
+                {proyecto.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+        {puedeCrear && (
+          <button
+            type="button"
+            className="eq-btn"
+            disabled={!idProyecto}
+            onClick={abrirForm}
+          >
+            Crear equipo
+          </button>
+        )}
       </div>
 
-      <div className="eq-layout">
-        {/* LISTA */}
+      {error && <p className="eq-error">{error}</p>}
+      {aviso && <p className="eq-ok">{aviso}</p>}
+
+      {!idProyecto ? (
+        <p className="eq-muted">
+          Selecciona un proyecto para ver y crear equipos.
+        </p>
+      ) : equiposDelProyecto.length === 0 ? (
+        <p className="eq-muted">
+          {proyectoActual?.nombre} todavía no tiene equipos.
+        </p>
+      ) : (
         <div className="eq-grid">
-          {equipos.length === 0 ? (
-            <p className="eq-msg">No hay equipos en la organización.</p>
-          ) : (
-            equipos.map((equipo) => {
-              const activo = seleccionado?.id_equipo === equipo.id_equipo;
-              return (
-                <article
-                  key={equipo.id_equipo}
-                  className={activo ? "eq-card active" : "eq-card"}
-                  onClick={() => abrirDetalle(equipo)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") abrirDetalle(equipo);
-                  }}
-                >
-                  <div className="eq-card-top">
-                    <h3>{equipo.nombre}</h3>
-                    <span className="eq-badge">{equipo.estado}</span>
-                  </div>
-                  <p className="eq-proy">
-                    {nombreProyecto(equipo.id_proyecto)}
-                  </p>
-                  {equipo.descripcion && (
-                    <p className="eq-desc">{equipo.descripcion}</p>
-                  )}
-                </article>
-              );
-            })
-          )}
+          {equiposDelProyecto.map((equipo) => {
+            const cantidad = tareas.filter(
+              (tarea) => tarea.id_equipo === equipo.id_equipo,
+            ).length;
+            return (
+              <button
+                key={equipo.id_equipo}
+                type="button"
+                className={
+                  elegido === equipo.id_equipo ? "eq-card active" : "eq-card"
+                }
+                onClick={() => setElegido(equipo.id_equipo)}
+              >
+                <span>{proyectoActual?.nombre}</span>
+                <strong>{equipo.nombre}</strong>
+                <small>
+                  {cantidad} tarea(s) · {equipo.estado}
+                </small>
+              </button>
+            );
+          })}
         </div>
+      )}
 
-        {/* DETALLE */}
-        <aside className="eq-detail">
-          {!seleccionado ? (
-            <div className="eq-detail-empty">
-              <span>♧</span>
-              <p>Haz clic en un equipo para ver integrantes y roles.</p>
-            </div>
-          ) : (
-            <>
-              <span className="eq-eyebrow">DETALLE</span>
-              <h2>{seleccionado.nombre}</h2>
-              <span className="eq-badge">{seleccionado.estado}</span>
-              <p className="eq-detail-proy">
-                Proyecto: {nombreProyecto(seleccionado.id_proyecto)}
-              </p>
-              {seleccionado.descripcion && (
-                <p className="eq-desc">{seleccionado.descripcion}</p>
-              )}
-
-              {cargandoDetalle ? (
-                <p className="eq-msg">Cargando integrantes...</p>
+      {equipoActual && (
+        <div className="eq-detail">
+          <h2>{equipoActual.nombre}</h2>
+          <p>{proyectoActual?.nombre}</p>
+          <div className="eq-cols">
+            <div>
+              <h3>Tareas</h3>
+              {tareasDelEquipo.length === 0 ? (
+                <p className="eq-muted">Este equipo todavía no tiene tareas.</p>
               ) : (
-                <>
-                  <div className="eq-lider-box">
-                    <span className="eq-eyebrow">LÍDER</span>
-                    {lider ? (
-                      <>
-                        <strong>{lider.nombre}</strong>
-                        <span>
-                          {lider.rol_equipo} · {lider.dedicacion}% ·{" "}
-                          {lider.email}
-                        </span>
-                      </>
-                    ) : (
-                      <p className="eq-muted">
-                        No hay un rol de líder marcado en este equipo.
-                      </p>
-                    )}
-                  </div>
-
-                  <h3 className="eq-section-title">
-                    Integrantes ({integrantes.length})
-                  </h3>
-                  {integrantes.length === 0 ? (
-                    <p className="eq-muted">Sin integrantes activos.</p>
-                  ) : (
-                    <ul className="eq-members">
-                      {integrantes.map((m) => (
-                        <li key={m.id_persona}>
-                          <div>
-                            <strong>
-                              {m.nombre}
-                              {m.esLider ? " · Líder" : ""}
-                            </strong>
-                            <span>{m.email}</span>
-                          </div>
-                          <span className="eq-member-meta">
-                            {m.rol_equipo} · {m.dedicacion}%
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="eq-chat-placeholder">
-                    <strong>Chat con el líder / equipo</strong>
-                    <p>
-                      Próximamente: comunicación en tiempo real con el grupo.
-                    </p>
-                  </div>
-                </>
+                tareasDelEquipo.map((tarea) => (
+                  <article key={tarea.id_tarea}>
+                    <strong>{tarea.nombre}</strong>
+                    <span>
+                      {tarea.prioridad} · {tarea.horas_estimadas} h ·{" "}
+                      {tarea.estado}
+                    </span>
+                  </article>
+                ))
               )}
-            </>
-          )}
-        </aside>
-      </div>
+            </div>
+            <div>
+              <h3>Integrantes</h3>
+              {miembros.length === 0 ? (
+                <p className="eq-muted">Todavía no hay personas asignadas.</p>
+              ) : (
+                miembros.map((miembro) => (
+                  <article key={miembro.id_equipo_persona}>
+                    <strong>{nombrePersona(miembro.id_persona)}</strong>
+                    <span>
+                      {miembro.rol_equipo} · {miembro.dedicacion}%
+                    </span>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {abierto && proyectoActual && (
+        <div className="eq-modal">
+          <form
+            className="eq-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              crear();
+            }}
+          >
+            <div className="eq-form-head">
+              <div>
+                <span>NUEVO EQUIPO</span>
+                <h2>{proyectoActual.nombre}</h2>
+              </div>
+              <button type="button" onClick={() => setAbierto(false)}>
+                ×
+              </button>
+            </div>
+
+            <label>
+              Proyecto
+              <input value={proyectoActual.nombre} readOnly />
+            </label>
+            <label>
+              Nombre del equipo
+              <input
+                required
+                value={nombre}
+                placeholder="Ej. Equipo backend"
+                onChange={(e) => setNombre(e.target.value)}
+              />
+            </label>
+            <label>
+              Descripción
+              <input
+                value={descripcion}
+                placeholder="Opcional"
+                onChange={(e) => setDescripcion(e.target.value)}
+              />
+            </label>
+
+            <h3>Tareas de este equipo</h3>
+            {filas.map((fila, indice) => (
+              <div className="eq-row" key={indice}>
+                <input
+                  placeholder="Nombre de la tarea"
+                  value={fila.nombre}
+                  onChange={(e) =>
+                    setFilas((actual) =>
+                      actual.map((item, i) =>
+                        i === indice
+                          ? { ...item, nombre: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+                <select
+                  value={fila.prioridad}
+                  onChange={(e) =>
+                    setFilas((actual) =>
+                      actual.map((item, i) =>
+                        i === indice
+                          ? { ...item, prioridad: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="BAJA">Baja</option>
+                  <option value="MEDIA">Media</option>
+                  <option value="ALTA">Alta</option>
+                  <option value="CRITICA">Crítica</option>
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  value={fila.horas}
+                  onChange={(e) =>
+                    setFilas((actual) =>
+                      actual.map((item, i) =>
+                        i === indice
+                          ? { ...item, horas: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+                <input
+                  type="date"
+                  value={fila.inicio}
+                  onChange={(e) =>
+                    setFilas((actual) =>
+                      actual.map((item, i) =>
+                        i === indice
+                          ? { ...item, inicio: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+                <input
+                  type="date"
+                  value={fila.limite}
+                  onChange={(e) =>
+                    setFilas((actual) =>
+                      actual.map((item, i) =>
+                        i === indice
+                          ? { ...item, limite: e.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              className="eq-btn-ghost"
+              onClick={() => setFilas((actual) => [...actual, filaVacia()])}
+            >
+              Agregar otra tarea
+            </button>
+            <div className="eq-form-actions">
+              <button
+                type="button"
+                className="eq-btn-ghost"
+                onClick={() => setAbierto(false)}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="eq-btn" disabled={guardando}>
+                {guardando ? "Creando..." : "Crear equipo"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </section>
   );
 }

@@ -18,6 +18,8 @@ import MisTareas from "./pages/MisTareas/MisTareas";
 import MisProyectos from "./pages/MisProyectos/MisProyectos";
 import MiEquipo from "./pages/MiEquipo/MiEquipo";
 import MisHabilidades from "./pages/MisHabilidades/MisHabilidades";
+import Chat from "./pages/Chat/Chat";
+import Habilidades from "./pages/Habilidad/Habilidades";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -113,6 +115,14 @@ function App() {
 
         <Route element={<RutaPorRol rolesPermitidos={[4]} />}>
           <Route path="mis-habilidades" element={<MisHabilidades />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[1, 2, 3, 4]} />}>
+          <Route path="chat" element={<Chat />} />
+        </Route>
+
+        <Route element={<RutaPorRol rolesPermitidos={[1, 3]} />}>
+          <Route path="habilidades" element={<Habilidades />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

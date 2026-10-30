@@ -591,6 +591,7 @@ function Organizaciones() {
                   Teléfono
                   <input
                     value={adminTelefono}
+                    maxlength={11}
                     onChange={(e) => setAdminTelefono(e.target.value)}
                   />
                 </label>

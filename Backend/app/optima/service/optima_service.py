@@ -452,7 +452,7 @@ class OptimaService:
         resultados = self.ranking_calculator.calcular_ranking(resultados)
 
         return resultados
-
+    
     @staticmethod
     def _obtener_nombre_habilidad(habilidad) -> str:
 

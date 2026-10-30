@@ -30,13 +30,13 @@ const API_URL = "http://127.0.0.1:8000";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioActual | null>(null);
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("flowos_token"),
+    sessionStorage.getItem("flowos_token"),
   );
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const cargarUsuario = async () => {
-      const tokenGuardado = localStorage.getItem("flowos_token");
+      const tokenGuardado = sessionStorage.getItem("flowos_token");
 
       if (!tokenGuardado) {
         setCargando(false);
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(tokenGuardado);
         setUsuario(datos);
       } catch {
-        localStorage.removeItem("flowos_token");
+        sessionStorage.removeItem("flowos_token");
         setToken(null);
         setUsuario(null);
       } finally {
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const datos = await respuesta.json();
 
-    localStorage.setItem("flowos_token", datos.access_token);
+    sessionStorage.setItem("flowos_token", datos.access_token);
     setToken(datos.access_token);
 
     const respuestaUsuario = await fetch(`${API_URL}/auth/me`, {
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!respuestaUsuario.ok) {
-      localStorage.removeItem("flowos_token");
+      sessionStorage.removeItem("flowos_token");
       setToken(null);
       throw new Error("No fue posible obtener la información del usuario.");
     }
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const cerrarSesion = () => {
-    localStorage.removeItem("flowos_token");
+    sessionStorage.removeItem("flowos_token");
     setToken(null);
     setUsuario(null);
   };

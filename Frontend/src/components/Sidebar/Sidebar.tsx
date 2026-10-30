@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { blobFotoPersona, subirMiFoto } from "../../service/api";
 
 import "./Sidebar.css";
 
@@ -74,10 +76,22 @@ const SECCIONES_MENU: SeccionMenu[] = [
         icono: "♧",
       },
       {
+        nombre: "Chat",
+        ruta: "/chat",
+        roles: [1, 2, 3, 4],
+        icono: "💬",
+      },
+      {
         nombre: "Tareas",
         ruta: "/tareas",
         roles: [1, 2, 3],
         icono: "✓",
+      },
+      {
+        nombre: "Habilidades",
+        ruta: "/habilidades",
+        roles: [1, 3],
+        icono: "◆",
       },
     ],
   },
@@ -143,6 +157,21 @@ function obtenerInicial(nombre: string | undefined): string {
 
 function Sidebar() {
   const { usuario } = useAuth();
+  const [fotoUrl, setFotoUrl] = useState("");
+
+  useEffect(() => {
+    if (!usuario?.id_persona) return;
+    let objectUrl = "";
+    blobFotoPersona(usuario.id_persona)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setFotoUrl(objectUrl);
+      })
+      .catch(() => setFotoUrl(""));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [usuario?.id_persona]);
 
   return (
     <aside className="sidebar">
@@ -158,9 +187,24 @@ function Sidebar() {
 
         {usuario && (
           <div className="sidebar-profile">
-            <div className="sidebar-profile-avatar">
-              {obtenerInicial(usuario.nombre_usuario)}
-            </div>
+            <label className="sidebar-profile-avatar" title="Cambiar foto">
+              {fotoUrl ? (
+                <img src={fotoUrl} alt="Foto de perfil" />
+              ) : (
+                obtenerInicial(usuario.nombre_usuario)
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                onChange={async (e) => {
+                  const archivo = e.target.files?.[0];
+                  if (!archivo) return;
+                  await subirMiFoto(archivo);
+                  window.location.reload();
+                }}
+              />
+            </label>
 
             <div className="sidebar-profile-info">
               <strong>{usuario.nombre_usuario}</strong>

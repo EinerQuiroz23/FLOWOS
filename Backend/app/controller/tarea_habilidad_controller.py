@@ -1,4 +1,6 @@
 from typing import List
+from sqlalchemy import text
+
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -210,3 +212,35 @@ def actualizar_registro(
             status_code=400,
             detail=str(error)
         )
+
+@router.delete("/{id_tarea_habilidad}", status_code=204)
+def eliminar_tarea_habilidad(
+    id_tarea_habilidad: int,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(
+        require_any_role("ADMIN", "SECRETARIO")
+    ),
+):
+    fila = db.execute(
+        text(
+            """
+            DELETE FROM tarea_habilidad AS th
+            USING tarea AS t, proyecto AS p
+            WHERE th.id_tarea_habilidad = :id
+              AND t.id_tarea = th.id_tarea
+              AND p.id_proyecto = t.id_proyecto
+              AND p.id_organizacion = :org
+            RETURNING th.id_tarea_habilidad
+            """
+        ),
+        {"id": id_tarea_habilidad, "org": usuario.id_organizacion},
+    ).first()
+
+    if not fila:
+        db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail="No se encontró esa habilidad en la tarea",
+        )
+
+    db.commit()

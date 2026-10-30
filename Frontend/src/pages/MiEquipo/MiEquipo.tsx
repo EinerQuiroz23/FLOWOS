@@ -11,10 +11,13 @@ import {
   obtenerProyectos,
   obtenerPersonas,
   obtenerPersonasPorEquipo,
-  obtenerMensajesEquipo,
+  obtenerMensajesBandeja,
   enviarMensajeEquipo,
+  enviarArchivoChat,
+  blobArchivoChat,
+  blobFotoPersona,
   type EquipoPersonaItem,
-  type MensajeEquipo,
+  type MensajeChat,
 } from "../../service/api";
 import { useAuth } from "../../context/AuthContext";
 import type { Equipo } from "../../types/equipo";
@@ -39,10 +42,102 @@ interface EquipoDetalle {
 
 function inicialNombre(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
-  if (partes.length >= 2) {
-    return (partes[0][0] + partes[1][0]).toUpperCase();
-  }
+  if (partes.length >= 2) return (partes[0][0] + partes[1][0]).toUpperCase();
   return (nombre[0] || "?").toUpperCase();
+}
+
+function esLider(rol?: string | null): boolean {
+  return (rol || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .includes("LIDER");
+}
+
+function textoRol(rol?: string | null): string {
+  return esLider(rol) ? "Líder" : rol || "Integrante";
+}
+
+function AvatarFoto({
+  idPersona,
+  nombre,
+  mio,
+}: {
+  idPersona: number;
+  nombre: string;
+  mio?: boolean;
+}) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    let vivo = true;
+    let objectUrl = "";
+    blobFotoPersona(idPersona)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        if (vivo) setUrl(objectUrl);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [idPersona]);
+
+  if (url) {
+    return (
+      <img
+        className={mio ? "mi-eq-msg-avatar mio" : "mi-eq-msg-avatar"}
+        src={url}
+        alt={nombre}
+      />
+    );
+  }
+  return (
+    <div
+      className={mio ? "mi-eq-msg-avatar mio" : "mi-eq-msg-avatar"}
+      title={nombre}
+    >
+      {inicialNombre(nombre)}
+    </div>
+  );
+}
+
+function Media({ mensaje }: { mensaje: MensajeChat }) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    if (!mensaje.tipo || mensaje.tipo === "TEXTO") return;
+    let vivo = true;
+    let objectUrl = "";
+    blobArchivoChat(mensaje.id_mensaje)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        if (vivo) setUrl(objectUrl);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [mensaje.id_mensaje, mensaje.tipo]);
+
+  if (mensaje.tipo === "IMAGEN") {
+    return url ? <img src={url} alt={mensaje.nombre_archivo || ""} /> : null;
+  }
+  if (mensaje.tipo === "AUDIO") {
+    return url ? <audio controls src={url} /> : null;
+  }
+  if (mensaje.tipo === "ARCHIVO") {
+    return url ? (
+      <a href={url} download={mensaje.nombre_archivo || "archivo"}>
+        {mensaje.nombre_archivo || mensaje.contenido}
+      </a>
+    ) : (
+      <span>{mensaje.nombre_archivo}</span>
+    );
+  }
+  return <p>{mensaje.contenido}</p>;
 }
 
 function MiEquipo() {
@@ -54,13 +149,16 @@ function MiEquipo() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
-  const [mensajes, setMensajes] = useState<MensajeEquipo[]>([]);
+  const [mensajes, setMensajes] = useState<MensajeChat[]>([]);
   const [texto, setTexto] = useState("");
   const [cargandoChat, setCargandoChat] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [grabando, setGrabando] = useState(false);
   const [errorChat, setErrorChat] = useState("");
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const recRef = useRef<MediaRecorder | null>(null);
 
   useEffect(() => {
     const cargar = async () => {
@@ -76,29 +174,22 @@ function MiEquipo() {
 
         const mapaEquipos = new Map<number, Equipo>();
         todosEquipos.forEach((e) => mapaEquipos.set(e.id_equipo, e));
-
         const mapaProyectos = new Map<number, Proyecto>();
         proyectos.forEach((p) => mapaProyectos.set(p.id_proyecto, p));
-
         const mapaPersonas = new Map<number, Persona>();
         personas.forEach((p) => mapaPersonas.set(p.id_persona, p));
 
-        const activos = misRels.filter((r) => !r.fecha_fin);
         const detalle: EquipoDetalle[] = [];
-
-        for (const r of activos) {
+        for (const r of misRels.filter((item) => !item.fecha_fin)) {
           const eq = mapaEquipos.get(r.id_equipo);
           if (!eq) continue;
-
           const proy = mapaProyectos.get(eq.id_proyecto);
-
           let integrantesRel: EquipoPersonaItem[] = [];
           try {
             integrantesRel = await obtenerPersonasPorEquipo(r.id_equipo);
           } catch {
             integrantesRel = [];
           }
-
           detalle.push({
             id_equipo: eq.id_equipo,
             nombre: eq.nombre,
@@ -139,8 +230,7 @@ function MiEquipo() {
     setCargandoChat(true);
     setErrorChat("");
     try {
-      const data = await obtenerMensajesEquipo(idEquipo);
-      setMensajes(data);
+      setMensajes(await obtenerMensajesBandeja(idEquipo));
     } catch (err) {
       setMensajes([]);
       setErrorChat(
@@ -157,11 +247,10 @@ function MiEquipo() {
       return;
     }
     cargarMensajes(seleccionado.id_equipo);
-
-    const id = window.setInterval(() => {
-      cargarMensajes(seleccionado.id_equipo);
-    }, 5000);
-
+    const id = window.setInterval(
+      () => cargarMensajes(seleccionado.id_equipo),
+      5000,
+    );
     return () => window.clearInterval(id);
   }, [seleccionado, cargarMensajes]);
 
@@ -172,16 +261,12 @@ function MiEquipo() {
   const manejarEnvio = async (e: FormEvent) => {
     e.preventDefault();
     if (!seleccionado || !texto.trim() || enviando) return;
-
     setEnviando(true);
     setErrorChat("");
     try {
-      const nuevo = await enviarMensajeEquipo(
-        seleccionado.id_equipo,
-        texto.trim(),
-      );
-      setMensajes((prev) => [...prev, nuevo]);
+      await enviarMensajeEquipo(seleccionado.id_equipo, texto.trim());
       setTexto("");
+      await cargarMensajes(seleccionado.id_equipo);
     } catch (err) {
       setErrorChat(
         err instanceof Error ? err.message : "No se pudo enviar el mensaje",
@@ -191,13 +276,48 @@ function MiEquipo() {
     }
   };
 
-  if (cargando) {
-    return <div className="mi-eq-msg">Cargando tus equipos...</div>;
-  }
+  const subir = async (file: File | null) => {
+    if (!file || !seleccionado) return;
+    setEnviando(true);
+    setErrorChat("");
+    try {
+      await enviarArchivoChat(seleccionado.id_equipo, file);
+      await cargarMensajes(seleccionado.id_equipo);
+    } catch (err) {
+      setErrorChat(
+        err instanceof Error ? err.message : "No se pudo subir el archivo",
+      );
+    } finally {
+      setEnviando(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
-  if (error) {
-    return <div className="mi-eq-error">{error}</div>;
-  }
+  const grabar = async () => {
+    if (!seleccionado) return;
+    if (grabando && recRef.current) {
+      recRef.current.stop();
+      setGrabando(false);
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream);
+    const partes: Blob[] = [];
+    rec.ondataavailable = (e) => {
+      if (e.data.size) partes.push(e.data);
+    };
+    rec.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = new Blob(partes, { type: "audio/webm" });
+      void subir(new File([blob], "audio.webm", { type: "audio/webm" }));
+    };
+    recRef.current = rec;
+    rec.start();
+    setGrabando(true);
+  };
+
+  if (cargando) return <div className="mi-eq-msg">Cargando tus equipos...</div>;
+  if (error) return <div className="mi-eq-error">{error}</div>;
 
   return (
     <div className="mi-eq-page">
@@ -207,7 +327,6 @@ function MiEquipo() {
           <p className="mi-eq-hint">
             Selecciona un equipo para ver integrantes y el chat.
           </p>
-
           {equipos.length === 0 ? (
             <p className="mi-eq-hint">No perteneces a ningún equipo activo.</p>
           ) : (
@@ -223,9 +342,14 @@ function MiEquipo() {
                     }
                     onClick={() => setSeleccionado(e)}
                   >
-                    <strong>{e.nombre}</strong>
+                    <strong>
+                      {e.nombre}
+                      {esLider(e.miRol) && (
+                        <span className="mi-eq-lider">Líder</span>
+                      )}
+                    </strong>
                     <span>
-                      {e.nombre_proyecto} · {e.miRol}
+                      {e.nombre_proyecto} · {textoRol(e.miRol)}
                     </span>
                   </button>
                 </li>
@@ -240,36 +364,47 @@ function MiEquipo() {
           ) : (
             <>
               <span className="mi-eq-label">EQUIPO</span>
-              <h2>{seleccionado.nombre}</h2>
+              <h2>
+                {seleccionado.nombre}
+                {esLider(seleccionado.miRol) && (
+                  <span className="mi-eq-lider">Líder</span>
+                )}
+              </h2>
               <p className="mi-eq-hint">
                 Proyecto: {seleccionado.nombre_proyecto}
                 <br />
-                Tu rol: {seleccionado.miRol} · Dedicación:{" "}
+                Tu rol: {textoRol(seleccionado.miRol)} · Dedicación:{" "}
                 {seleccionado.miDedicacion}%
               </p>
 
               <h3 className="mi-eq-sub">Integrantes</h3>
-              {seleccionado.integrantes.length === 0 ? (
-                <p className="mi-eq-hint">No se pudieron cargar integrantes.</p>
-              ) : (
-                <ul className="mi-eq-members">
-                  {seleccionado.integrantes.map((m) => (
+              <ul className="mi-eq-members">
+                {seleccionado.integrantes.map((m) => {
+                  const soyYo =
+                    miIdPersona != null &&
+                    Number(m.id_persona) === Number(miIdPersona);
+                  return (
                     <li key={m.id_persona}>
-                      <strong>{m.nombre}</strong>
+                      <strong>
+                        {m.nombre}
+                        {soyYo ? " · Tú" : ""}
+                        {esLider(m.rol_equipo) && (
+                          <span className="mi-eq-lider">Líder</span>
+                        )}
+                      </strong>
                       <span>
-                        {m.rol_equipo} · {m.dedicacion}%
+                        {textoRol(m.rol_equipo)} · {m.dedicacion}%
                       </span>
                     </li>
-                  ))}
-                </ul>
-              )}
+                  );
+                })}
+              </ul>
 
               <div className="mi-eq-chat">
                 <div className="mi-eq-chat-header">
                   <strong>Chat del equipo</strong>
                   <span>Actualiza cada 5 s</span>
                 </div>
-
                 <div className="mi-eq-chat-messages">
                   {cargandoChat && mensajes.length === 0 ? (
                     <p className="mi-eq-hint">Cargando mensajes...</p>
@@ -282,7 +417,7 @@ function MiEquipo() {
                       const esMio =
                         miIdPersona != null &&
                         Number(m.id_persona) === Number(miIdPersona);
-
+                      const esTexto = !m.tipo || m.tipo === "TEXTO";
                       return (
                         <div
                           key={m.id_mensaje}
@@ -291,14 +426,11 @@ function MiEquipo() {
                           }
                         >
                           {!esMio && (
-                            <div
-                              className="mi-eq-msg-avatar"
-                              title={m.nombre_persona}
-                            >
-                              {inicialNombre(m.nombre_persona)}
-                            </div>
+                            <AvatarFoto
+                              idPersona={m.id_persona}
+                              nombre={m.nombre}
+                            />
                           )}
-
                           <div
                             className={
                               esMio
@@ -307,25 +439,26 @@ function MiEquipo() {
                             }
                           >
                             {!esMio && (
-                              <div className="mi-eq-msg-name">
-                                {m.nombre_persona}
-                              </div>
+                              <div className="mi-eq-msg-name">{m.nombre}</div>
                             )}
-                            <p>{m.contenido}</p>
+                            {esTexto ? (
+                              <p>{m.contenido}</p>
+                            ) : (
+                              <Media mensaje={m} />
+                            )}
                             <span className="mi-eq-msg-time">
-                              {new Date(m.fecha_creacion).toLocaleTimeString(
-                                [],
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
+                              {new Date(m.fecha_envio).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </span>
                           </div>
-
                           {esMio && (
-                            <div className="mi-eq-msg-avatar mio" title="Tú">
-                              {usuario?.nombre_usuario
-                                ? usuario.nombre_usuario.charAt(0).toUpperCase()
-                                : "T"}
-                            </div>
+                            <AvatarFoto
+                              idPersona={m.id_persona}
+                              nombre={usuario?.nombre_usuario || "Tú"}
+                              mio
+                            />
                           )}
                         </div>
                       );
@@ -333,10 +466,29 @@ function MiEquipo() {
                   )}
                   <div ref={chatEndRef} />
                 </div>
-
                 {errorChat && <p className="mi-eq-chat-error">{errorChat}</p>}
-
                 <form className="mi-eq-chat-form" onSubmit={manejarEnvio}>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    hidden
+                    accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt"
+                    onChange={(e) => subir(e.target.files?.[0] ?? null)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={enviando || grabando}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void grabar()}
+                    disabled={enviando}
+                  >
+                    {grabando ? "Detener" : "Audio"}
+                  </button>
                   <input
                     type="text"
                     value={texto}

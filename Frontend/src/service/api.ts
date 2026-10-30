@@ -9,7 +9,7 @@ import type { Rol } from "../types/rol";
 const API_URL = "http://127.0.0.1:8000";
 
 function obtenerHeaders(): HeadersInit {
-  const token = localStorage.getItem("flowos_token");
+  const token = sessionStorage.getItem("flowos_token");
 
   return {
     "Content-Type": "application/json",
@@ -19,7 +19,7 @@ function obtenerHeaders(): HeadersInit {
 
 async function procesarRespuesta<T>(respuesta: Response): Promise<T> {
   if (respuesta.status === 401) {
-    localStorage.removeItem("flowos_token");
+    sessionStorage.removeItem("flowos_token");
     window.location.href = "/login";
 
     throw new Error("La sesión ha expirado.");
@@ -159,17 +159,12 @@ export type AlcanceOptima = "equipo" | "proyecto" | "organizacion";
 
 export async function evaluarTareaOptima(
   idTarea: number,
-  alcance: AlcanceOptima = "equipo",
+  alcance: string = "equipo",
 ): Promise<CandidatoOptima[]> {
-  const params = new URLSearchParams({ alcance });
-
   const respuesta = await fetch(
-    `${API_URL}/optima/tarea/${idTarea}?${params.toString()}`,
-    {
-      headers: obtenerHeaders(),
-    },
+    `${API_URL}/optima/tarea/${idTarea}?alcance=${alcance}`,
+    { headers: obtenerHeaders() },
   );
-
   return procesarRespuesta<CandidatoOptima[]>(respuesta);
 }
 
@@ -478,7 +473,7 @@ export async function crearPersona(datos: PersonaCreate): Promise<Persona> {
 export interface ProyectoCreate {
   nombre: string;
   descripcion?: string | null;
-  fecha_inicio: string; // "YYYY-MM-DD"
+  fecha_inicio: string;
   fecha_limite: string;
 }
 
@@ -526,4 +521,116 @@ export async function promoverAdminOrganizacion(
     },
   );
   return procesarRespuesta(respuesta);
+}
+
+export interface TareaCreate {
+  id_proyecto: number;
+  id_equipo: number;
+  nombre: string;
+  descripcion?: string | null;
+  prioridad?: string;
+  horas_estimadas: number;
+  fecha_inicio: string;
+  fecha_limite: string;
+}
+
+export async function crearTarea(datos: TareaCreate): Promise<Tarea> {
+  const respuesta = await fetch(`${API_URL}/tareas/`, {
+    method: "POST",
+    headers: obtenerHeaders(),
+    body: JSON.stringify(datos),
+  });
+  return procesarRespuesta<Tarea>(respuesta);
+}
+
+export interface MensajeChat {
+  id_mensaje: number;
+  id_equipo: number;
+  id_persona: number;
+  nombre: string;
+  contenido: string;
+  tipo: "TEXTO" | "IMAGEN" | "AUDIO" | "ARCHIVO" | string;
+  nombre_archivo?: string | null;
+  tiene_foto?: boolean;
+  fecha_envio: string;
+}
+
+export async function obtenerMensajesBandeja(
+  idEquipo: number,
+): Promise<MensajeChat[]> {
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/bandeja`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<MensajeChat[]>(respuesta);
+}
+
+export async function enviarMensajeBandeja(
+  idEquipo: number,
+  contenido: string,
+) {
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/bandeja`, {
+    method: "POST",
+    headers: obtenerHeaders(),
+    body: JSON.stringify({ contenido }),
+  });
+  return procesarRespuesta<MensajeChat>(respuesta);
+}
+
+export async function enviarArchivoChat(idEquipo: number, archivo: File) {
+  const token = sessionStorage.getItem("flowos_token");
+  const body = new FormData();
+  body.append("archivo", archivo);
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/archivo`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body,
+  });
+  return procesarRespuesta<MensajeChat>(respuesta);
+}
+
+export async function blobArchivoChat(idMensaje: number): Promise<Blob> {
+  const token = sessionStorage.getItem("flowos_token");
+  const respuesta = await fetch(`${API_URL}/chat/archivo/${idMensaje}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!respuesta.ok) throw new Error("No se pudo abrir el archivo");
+  return respuesta.blob();
+}
+
+export async function borrarChatParaMi(idEquipo: number) {
+  const respuesta = await fetch(`${API_URL}/chat/equipo/${idEquipo}/para-mi`, {
+    method: "DELETE",
+    headers: obtenerHeaders(),
+  });
+  if (!respuesta.ok && respuesta.status !== 204) {
+    throw new Error("No se pudo borrar la conversación");
+  }
+}
+
+export async function obtenerMisEquiposChat(): Promise<Equipo[]> {
+  const respuesta = await fetch(`${API_URL}/chat/mis-equipos`, {
+    headers: obtenerHeaders(),
+  });
+  return procesarRespuesta<Equipo[]>(respuesta);
+}
+
+export async function subirMiFoto(archivo: File) {
+  const token = sessionStorage.getItem("flowos_token");
+  const data = new FormData();
+  data.append("archivo", archivo);
+  const respuesta = await fetch(`${API_URL}/personas/mi-foto`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: data,
+  });
+  return procesarRespuesta<{ ok: boolean }>(respuesta);
+}
+
+export async function blobFotoPersona(idPersona: number) {
+  const token = sessionStorage.getItem("flowos_token");
+  const respuesta = await fetch(`${API_URL}/personas/foto/${idPersona}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!respuesta.ok) throw new Error("Sin foto");
+  return respuesta.blob();
 }

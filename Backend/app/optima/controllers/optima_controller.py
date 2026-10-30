@@ -26,27 +26,24 @@ router = APIRouter(
 )
 
 
+from fastapi import Query
+
 @router.get(
     "/tarea/{id_tarea}",
     response_model=List[CandidatoOptima],
 )
 def evaluar_tarea(
     id_tarea: int,
-    alcance: str = Query(
-        default="equipo",
-        description="equipo | proyecto | organizacion",
-    ),
+    alcance: str = Query("equipo"),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(require_role("ADMIN")),
 ):
     service = OptimaService(db)
-
     return service.evaluar_tarea(
         id_tarea=id_tarea,
         id_organizacion=usuario.id_organizacion,
         alcance=alcance,
     )
-
 
 @router.get(
     "/proyecto/{id_proyecto}/propuesta-equipo",
